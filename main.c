@@ -151,7 +151,7 @@ int main (argc, argv)
     char *argv[];
 {
     //Local Variables
-    register column *currrentCol;
+    register column *currentCol;
     register char *p, *q;
     register node *currentNode;
     register column *bestCol; // column chosen for branching
@@ -163,6 +163,101 @@ int main (argc, argv)
     verbose = argc - 1;
     if (verbose){
         sscanf(argv[1], "%d", &spacing);
+    }
+
+    currentCol = colArray + 1;
+    fgets(buf, bufSize, stdin);
+    if(buf[strlen(buf)-1] != '\n'){
+        panic("Input line too long");
+    }
+    for(p = buf, primary = 1; *p; p++){
+        while(isspace(*p)){ // isspace() is a function to check if the passed character is whitespace
+            p++;
+        }
+        if(!*p){
+            break;
+        }
+        if(*p == '|'){
+            primary = 0;
+            if(currentCol == colArray + 1){
+                panic("No primary columns");
+            }
+            (currentCol - 1)->next = &root,root.prev = currentCol-1;
+            continue;
+        }
+        for(q = p+1; !isspace(*q); q++);
+        if(q > p+7){
+            panic("Column name too long");
+        }
+        if(currentCol >= &colArray[maxCols]){
+            panic("Too many columns");
+        }
+        for(q = currentCol->name; !isspace(*p); q++, p++){
+            *q = *p;
+        }
+        currentCol->head.up = currentCol->head.down = &currentCol->head;
+        currentCol->len = 0;
+        if(primary){
+            currentCol->prev = currentCol-1, (currentCol - 1)->next = currentCol;
+        }
+        else{
+            currentCol->prev = currentCol->next = currentCol;
+        }
+        currentCol++;
+    }
+    if(primary){
+        if(currentCol == colArray + 1){
+            panic("No primary columns");
+        }
+        (currentCol-1)->next = &root, root.prev = currentCol - 1;
+    }
+
+    currentNode = nodeArray;
+    while(fgets(buf, bufSize, stdin)){
+        register column *ccol;
+        register node *rowStart;
+        if(buf[strlen(buf)-1] != '\n'){
+            panic("Input line too long");
+        }
+        rowStart = NULL;
+        for(p = buf; *p; p++){
+            while(isspace(*p)){
+                p++;
+            }
+            if(!*p){
+                break;
+            }
+            for(q = p+1; !isspace(*q); q++);
+            if(q > p+7){
+                panic("Column name too long");
+            }
+            for(q = currentCol->name; !isspace(*p); q++, p++){
+                *q = *p;
+            }
+            *q = '\0';
+            for(ccol = colArray; strcmp(ccol->name, currentCol->name); ccol++);
+            if(ccol == currentCol){
+                panic("Unknown column name");
+            }
+            if(currentNode == &nodeArray[maxNodes]){
+                panic("Too many nodes");
+            }
+            if(!rowStart){
+                rowStart = currentNode;
+            }
+            else{
+                currentNode->left = currentNode -1, (currentNode -1)->right = currentNode;
+            }
+            currentNode->col = ccol;
+            currentNode->up = ccol->head.up, ccol->head.up->down = currentNode;
+            ccol->head.up = currentNode, currentNode->down = &ccol->head;
+            ccol->len++;
+            currentNode++;
+        }
+        if(!rowStart){
+            panic("Empty row");
+        }
+        rowStart->left = currentNode -1, (currentNode -1)->right = rowStart;
     }
 
 
@@ -181,7 +276,7 @@ int main (argc, argv)
 
 
 
-}
+} //END INT MAIN
 
 
 
