@@ -10,6 +10,7 @@ cmake-build-release/
 *.blg
 *.dvi
 *.exe
+*.idx
 *.lof
 *.log
 *.lot
@@ -17,6 +18,7 @@ cmake-build-release/
 *.out
 *.pdf
 *.run.xml
+*.scn
 *.sln
 *.snm
 *.spl
@@ -24,5 +26,6 @@ cmake-build-release/
 *.synctex.gz
 *.toc
 *.vrb
+
 
 
