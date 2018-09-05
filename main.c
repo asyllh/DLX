@@ -107,7 +107,7 @@ node *choice[maxLevel]; //the row and column chosen on each level
 
 /* Output a row to screen:
  * A row is identified not by name, but by the names of the columns it contains.
- * printRow outputs a row, given a pointer to any of its columns.
+ * PrintRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
  */
 
@@ -134,7 +134,7 @@ void printRow(p)
 }
 
 
-void printState(int lev){
+void PrintState(int lev){
     register int l;
     for(l = 0; l <= lev; l++){
         printRow(choice[l]);
