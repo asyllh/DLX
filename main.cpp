@@ -80,6 +80,9 @@ using namespace std;
 
 //Each Node is linked to a Node on its left, a Node to its right, a Node above, and a Node below.
 //Each Node is also part of a Column.
+
+struct Column; //forward declare Column struct so that it can be used in Node struct below
+
 struct Node {
     Node* left; // Predecessor in row (node before this current node in row)
     Node* right; // Successor in row (node after this current node in row)
