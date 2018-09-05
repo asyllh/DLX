@@ -39,13 +39,13 @@ main.cpp
 
 
 #define bufSize 8 * maxCols + 3 // upper bound on the input line length
-#define panic(m) { fprintf(stderr, "%s!\n%s", m, buf); exit(-1); }
+//#define panic(m) { fprintf(stderr, "%s!\n%s", m, buf); exit(-1); }
 
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
+#include <stdio.h> //printf, fprintf, sscanf, fgets, NULL, stdin, stderr <cstdio>
+#include <stdlib.h> //exit, NULL <cstdlib>
+#include <ctype.h> //isspace() function, <cctype>
+#include <cstring> //strcmp, strlen <string.h>
 
 using namespace std;
 
@@ -78,87 +78,77 @@ using namespace std;
    their original state.
  */
 
-// Type Definitions:
-/*typedef struct nodeStruct{
-    struct nodeStruct *left, *right; //predecessor and successor in row
-    struct nodeStruct *up, *down; //predecessor and successor in column
-    struct colStruct *col; // the column containing this node
-} node;*/
-
-/*typedef struct colStruct{
-    node head; //the list header
-    int len; //the number of non-header items currently in this column's list
-    char name[8]; //name of column, used for printing
-    struct colStruct *prev, *next; //neighbours of this column
-} column;*/
-
-struct Node{
-    struct Node *left, *right; //predeccessor and successor in row
-    struct Node *up, *down; //predecessor and successor in column
-    struct Column *col; //the column containing this node
+//Each Node is linked to a Node on its left, a Node to its right, a Node above, and a Node below.
+//Each Node is also part of a Column.
+struct Node {
+    Node* left; // Predecessor in row (node before this current node in row)
+    Node* right; // Successor in row (node after this current node in row)
+    Node* up; // Predecessor in column (node above this current node in column)
+    Node* down; // Successor in column (node below this current node in column)
+    Column* col; // The column containing this current node
 };
 
-struct Column{
-    Node head; //the list header
-    int len; //the number of non-header items currently in this column's list
-    char name[8]; //name of column, used for printing
-    struct Column *prev, *next; //neighbours of this column.
+//Each Column has a length, a name, a header which is a Node.
+//Each Column also has a Nolumn to its left (prev) and a Column to its right (next)
+struct Column {
+    int len; // The number of non-header items currently in this column's list
+    char name[8]; // Name of column, used for printing
+    Node head; // The list header
+    Column* prev; // The column before this current column
+    Column* next; // The column after this current column
 };
-
 
 
 // Global Variables:
-int verbose; // $>0$ to show solutions, $>1$ to show partial ones too
-long long count = 0; // number of solutions found so far
-double updates; // number of times we deleted a list element
-int spacing = 1; // if |verbose|, we output solutions when |count%spacing==0|
-double profile[maxLevel][maxDegree]; // tree nodes of given level and degree
-double updateProfile[maxLevel]; // updates at a given level
+char buf[bufSize];
+int level; // number of choices in current partial solution
+int updates; // number of times we deleted a list element
+int verbose; // >0 to show solutions, >1 to show partial ones too
+int count = 0; // number of solutions found so far
 int maxb = 0; // maximum branching factor actually needed
 int maxl = 0; // maximum level actually reached
-
-Column colArray[maxCols + 2]; //place for column records
+int spacing = 1; // if |verbose|, we output solutions when |count%spacing==0|
+int profile[maxLevel][maxDegree]; // tree nodes of given level and degree
+int updateProfile[maxLevel]; // updates at a given level
 Node nodeArray[maxNodes]; //place for nodes
-char buf[bufSize];
-
-int level; // number of choices in current partial solution
-Node *choice[maxLevel]; //the row and column chosen on each level
+Node* choice[maxLevel]; //the row and column chosen on each level
+Column colArray[maxCols + 2]; //place for column records
 
 
 // Subroutines:
-
 /* Output a row to screen:
  * A row is identified not by name, but by the names of the columns it contains.
- * printRow outputs a row, given a pointer to any of its columns.
+ * PrintRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
  */
 
-void printRow(Node *p){
-    Node *q = p;
+void PrintRow(Node* p){
+
     int k;
+    Node* q = p;
+
     do {
-        printf(" %s", q->col->name); //cout << q->col->name;
+        cout << q->col->name;
         q = q->right;
     } while (q != p);
 
-    for(q = p->col->head.down, k=1; q != p; k++){
+    for(q = p->col->head.down, k=1; q != p; ++k){
         if(q == &(p->col->head)){
             cout << endl;
-            return; //row not in its column!
+            return; //row not in its column! //return what??
         }
         else {
             q = q->down;
         }
     }
-    printf(" (%d of %d)\n", k, p->col->len); //cout << " " << k << " of " << p->col->len << endl;
+    cout << " (" << k << " of " << p->col->len << ")" << endl;
 }
 
 
-
-void printState(int lev){
+void PrintState(int lev){
     int l;
-    for(l = 0; l <= lev; l++){
-        printRow(choice[l]);
+    for(l = 0; l <= lev; ++l){
+        PrintRow(choice[l]);
     }
 }
 
@@ -167,11 +157,17 @@ void printState(int lev){
    that is being covered.
  * Therefore, a node is never removed from a list twice.
  */
-void cover(Column *c) // Covering column
-{
-    Column *l, *r;
-    Node *rr, *nn, *uu, *dd;
+
+void Cover(Column* c){
+
     int k = 1; // updates
+    Node* nn;
+    Node* rr;
+    Node* uu;
+    Node* dd;
+    Column* l;
+    Column* r;
+
     l = c->prev;
     r = c->next;
     l->next = r;
@@ -183,8 +179,8 @@ void cover(Column *c) // Covering column
             dd = nn->down;
             uu->down = dd;
             dd->up = uu;
-            k++;
-            nn->col->len--;
+            ++k;
+            --nn->col->len;
         }
     }
     updates += k;
@@ -197,16 +193,21 @@ void cover(Column *c) // Covering column
  * The pointers thereby execute a 'dance' which returns them
    to their former state.
  */
-void uncover(Column *c){
+void Uncover(Column* c){
 
-    Column *l, *r;
-    Node *rr, *nn, *uu, *dd;
+    Node* nn;
+    Node* rr;
+    Node* uu;
+    Node* dd;
+    Column* l;
+    Column* r;
+
     for(rr = c->head.up; rr!= &(c->head); rr = rr->up){
         for(nn = rr->left; nn != rr; nn = nn->left){
             uu = nn->up;
             dd = nn->down;
             uu->down = dd->up = nn;
-            nn->col->len++;
+            ++nn->col->len;
         }
     }
     l = c->prev;
@@ -215,21 +216,20 @@ void uncover(Column *c){
 }
 
 
-
-
 // Main function:
 
-int main (int argc, char *argv[]){
+int main (int argc, char** argv){
 
     //Local Variables
-    Column *currentCol;
-    char *p, *q;
-    Node *currentNode;
-    Column *bestCol; // column chosen for branching
-    Node *pp; // traverses a row
-    int minLen;
+    char* p;
+    char* q;
     int j, k, x;
+    int minLen;
     int primary;
+    Node* pp; // traverses a row
+    Node* currentNode;
+    Column* currentCol;
+    Column* bestCol; // column chosen for branching
 
     verbose = argc - 1;
     if (verbose){
@@ -240,11 +240,12 @@ int main (int argc, char *argv[]){
     currentCol = colArray + 1;
     fgets(buf, bufSize, stdin);
     if(buf[strlen(buf)-1] != '\n'){
-        panic("Input line too long");
+        cout << "Input line too long" << endl;
+        exit(1);
     }
-    for(p = buf, primary = 1; *p; p++){
+    for(p = buf, primary = 1; *p; ++p){
         while(isspace(*p)){ // isspace() is a function to check if the passed character is whitespace
-            p++;
+            ++p;
         }
         if(!*p){
             break;
@@ -252,19 +253,26 @@ int main (int argc, char *argv[]){
         if(*p == '|'){
             primary = 0;
             if(currentCol == colArray + 1){
-                panic("No primary columns");
+                /* This program ends if the input file has no primary columns.
+                 * We don't care, we want all columns, we will not have primary and non-primary columns in input file
+                 * Need to change this piece of code.
+                 */
+                cout << "No primary columns." << endl;
+                exit(1);
             }
             (currentCol - 1)->next = &root,root.prev = currentCol-1;
             continue;
         }
-        for(q = p+1; !isspace(*q); q++);
+        for(q = p+1; !isspace(*q); ++q);
         if(q > p+7){
-            panic("Column name too long");
+            cout << "Column name too long." << endl;
+            exit(1);
         }
         if(currentCol >= &colArray[maxCols]){
-            panic("Too many columns");
+            cout << "Too many columns." << endl;
+            exit(1);
         }
-        for(q = currentCol->name; !isspace(*p); q++, p++){
+        for(q = currentCol->name; !isspace(*p); ++q, ++p){
             *q = *p;
         }
         currentCol->head.up = currentCol->head.down = &currentCol->head;
@@ -275,45 +283,52 @@ int main (int argc, char *argv[]){
         else{
             currentCol->prev = currentCol->next = currentCol;
         }
-        currentCol++;
+        ++currentCol;
     }
     if(primary){
         if(currentCol == colArray + 1){
-            panic("No primary columns");
+            cout << "No primary columns." << endl;
+            exit(1);
         }
         (currentCol-1)->next = &root, root.prev = currentCol - 1;
     }
 
+
     // Inputting the matrix - read the rows:
     currentNode = nodeArray;
     while(fgets(buf, bufSize, stdin)){
-        Column *ccol;
-        Node *rowStart;
+        Node* rowStart;
+        Column* ccol;
+
         if(buf[strlen(buf)-1] != '\n'){
-            panic("Input line too long");
+            cout << "Input line too long." << endl;
+            exit(1);
         }
         rowStart = NULL;
-        for(p = buf; *p; p++){
+        for(p = buf; *p; ++p){
             while(isspace(*p)){
-                p++;
+                ++p;
             }
             if(!*p){
                 break;
             }
-            for(q = p+1; !isspace(*q); q++);
+            for(q = p+1; !isspace(*q); ++q);
             if(q > p+7){
-                panic("Column name too long");
+                cout << "Column name too long." << endl;
+                exit(1);
             }
-            for(q = currentCol->name; !isspace(*p); q++, p++){
+            for(q = currentCol->name; !isspace(*p); ++q, ++p){
                 *q = *p;
             }
-            *q = '\0';
-            for(ccol = colArray; strcmp(ccol->name, currentCol->name); ccol++);
+            *q = '\0'; //End of string, null character
+            for(ccol = colArray; strcmp(ccol->name, currentCol->name); ++ccol);
             if(ccol == currentCol){
-                panic("Unknown column name");
+                cout << "Unknown column name." << endl;
+                exit(1);
             }
             if(currentNode == &nodeArray[maxNodes]){
-                panic("Too many nodes");
+                cout << "Too many nodes." << endl;
+                exit(1);
             }
             if(!rowStart){
                 rowStart = currentNode;
@@ -324,68 +339,70 @@ int main (int argc, char *argv[]){
             currentNode->col = ccol;
             currentNode->up = ccol->head.up, ccol->head.up->down = currentNode;
             ccol->head.up = currentNode, currentNode->down = &ccol->head;
-            ccol->len++;
-            currentNode++;
+            ++ccol->len;
+            ++currentNode;
         }
         if(!rowStart){
-            panic("Empty row");
+            cout << "Empty row." << endl;
+            exit(1);
         }
         rowStart->left = currentNode - 1, (currentNode - 1)->right = rowStart;
     }
 
 
-/* Backtracking through all solutions:
- * Strategy for generating all exact covers will be to repeatedly always choose
-   the column that appears to be hardest to cover from all columns that still
-   need to be covered.
- * This is the column with the shortest list.
- * All possibilites are then explored via depth-first search.
+    /* Backtracking through all solutions:
+     * Strategy for generating all exact covers will be to repeatedly always choose
+       the column that appears to be hardest to cover from all columns that still
+       need to be covered.
+     * This is the column with the shortest list. (i.e. smallest len)
+     * All possibilites are then explored via depth-first search.
 
- * Depth-first search means last-in-first out maintenance of data structures.
- * There is no need for auxiliary tables to undelete elements from lists
-   when backing up.
- * The nodes removed from doubly linked lists remember their former neighbours,
-   because there is no garbage collection.
+     * Depth-first search means last-in-first out maintenance of data structures.
+     * There is no need for auxiliary tables to undelete elements from lists
+       when backing up.
+     * The nodes removed from doubly linked lists remember their former neighbours,
+       because there is no garbage collection.
 
- * The basic operation is 'covering a column'.
- * This means removing it from the list of columns needing to be covered,
-   and 'blocking' its rows, which is done by removing nodes from other
-   lists whenever they belong to a row of a node in this column's list.
- */
-level = 0;
+     * The basic operation is 'covering a column'.
+     * This means removing it from the list of columns needing to be covered,
+       and 'blocking' its rows, which is done by removing nodes from other
+       lists whenever they belong to a row of a node in this column's list.
+     */
+    level = 0;
     forward: ; // Set bestCol to the best column for branching:
         minLen = maxNodes;
         if(verbose > 2){
-            printf("Level %d", level);
+            cout << "Level: " << level;
         }
         for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
-            if(verbose > 2){
-                printf(" %s(%d)", currentCol->name, currentCol->len);
-            }
+            /*if(verbose > 2){
+                cout << " " << currentCol->name << "(" << currentCol->len << ")";
+            }*/
             if(currentCol->len < minLen){
                 bestCol = currentCol, minLen = currentCol->len;
             }
         }
         if(verbose){
             if(level > maxl){
-                if(level >= maxLevel){
-                    panic("Too many levels");
-                    maxl = level;
+                if(level >= maxLevel) {
+                    cout << "Too many levels." << endl;
+                    exit(1);
                 }
+                maxl = level;
             }
             if(minLen > maxb){
                 if(minLen >= maxDegree){
-                    panic("Too many branches");
-                    maxb = minLen;
+                    cout << "Too many branches." << endl;
+                    exit(1);
                 }
+                maxb = minLen;
             }
-            profile[level][minLen]++;
+            ++profile[level][minLen];
             if(verbose > 2){
-                printf("branching on %s(%d)\n", bestCol->name, minLen);
+                cout << "Branching on " << bestCol->name << "(" << minLen << ")" << endl;
             }
         }
-
-        cover(bestCol);
+        Cover(bestCol);
         currentNode = choice[level] = bestCol->head.down;
 
     advance: ;
@@ -393,75 +410,77 @@ level = 0;
             goto backup;
         }
         if(verbose > 1){
-            printf("L%d:",level);
-            printRow(currentNode);
+            cout << "Level " << level << ": ";
+            PrintRow(currentNode);
         }
+
         // Cover all other columns of currentNode
         for(pp = currentNode->right; pp != currentNode; pp = pp->right){
-            cover(pp->col);
+            Cover(pp->col);
         }
 
         if(root.next == &root){ //Record solution and goto recover
-            count++;
+            ++count;
             if(verbose){
-                profile[level+1][0]++;
+                ++profile[level+1][0];
                 if(count % spacing == 0){
-                    printf("%lld:\n", count);
-                    for(k = 0; k <= level; k++){
-                        printRow(choice[k]);
+                    cout << count << endl;
+                    for(k = 0; k <= level; ++k){
+                        PrintRow(choice[k]);
                     }
                 }
             }
             goto recover;
         }
-        level++;
+        ++level;
         goto forward;
 
-    backup: uncover(bestCol);
+    backup:
+        Uncover(bestCol);
         if(level == 0){
             goto done;
         }
-        level--;
+        --level;
         currentNode = choice[level];
         bestCol = currentNode->col;
 
-    recover:// Uncover all other columns of currentNode
-            /* We included left links, thereby making the rows doubly linked,
-               so that columns would be uncovered in the correct LIFO order
-               in this part of the program.
-             * The 'uncover' routine itself could have done its job with
-               right links only.
-             */
-            for(pp = currentNode->left; pp != currentNode; pp = pp->left){
-                 uncover(pp->col);
-             }
-
-             currentNode = choice[level] = currentNode->down;
-             goto advance;
+    // Uncover all other columns of currentNode
+    /* We included left links, thereby making the rows doubly linked,
+       so that columns would be uncovered in the correct LIFO order
+       in this part of the program.
+     * The 'uncover' routine itself could have done its job with
+       right links only.
+     */
+    recover:
+        for(pp = currentNode->left; pp != currentNode; pp = pp->left){
+            Uncover(pp->col);
+        }
+        currentNode = choice[level] = currentNode->down;
+        goto advance;
 
     done:
         if(verbose > 3){ // Print column lengths to make sure everything has been restored
-            printf("Final column lengths");
+            cout << "Final column lengths:" << endl;
             for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
-                printf(" %s(%d)", currentCol->name, currentCol->len);
+                cout << currentCol->name << "(" << currentCol->len << ")" << endl;
             }
-            printf("\n");
+            cout << endl;
         }
-    // End backtracking
+        // End backtracking
 
-    printf("Altogether %lld solutions, after %.15g updates. \n", count, updates);
+    cout << "Altogether " << count << " solutions, after " << updates << " updates." << endl;
     if(verbose){ // Print a profile of the search tree
         double tot, subtot;
         tot = 1; // The root node does not show up in the profile
-        for(level = 1; level <= maxl + 1; level++){
+        for(level = 1; level <= maxl + 1; ++level){
             subtot = 0;
-            for(k = 0; k <= maxb; k++){
-                printf(" %5.6g", profile[level][k]);
+            for(k = 0; k <= maxb; ++k){
+                cout << profile[level][k];
                 subtot += profile[level][k];
             }
-            printf(" %5.15g nodes, %.15g updates\n", subtot, updateProfile[level-1]);
+            cout << subtot << " nodes, " << updateProfile[level-1] << endl;
             tot += subtot;
         }
-        printf("Total %.15g nodes.\n", tot);
+        cout << "Total " << tot << "nodes." << endl;
     }
 } //END INT MAIN
