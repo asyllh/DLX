@@ -3,5 +3,5 @@ project(DLX)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main.c main.cpp)
+set(SOURCE_FILES main.cpp main.c dlx.cpp main.h)
 add_executable(DLX ${SOURCE_FILES})
