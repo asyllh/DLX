@@ -3,7 +3,24 @@ ALH
 main.cpp
 01/09/18
 /--------------*/
-
+/** TO DO **/
+/* Make all global functions local, and add necessary arguments to functions
+ * Make header file
+ * Check if all macros are needed
+ * nullptr
+ * Remove need for labels
+ * Change code so that it doesn't include 'primary' and other columns, all columns should be needed
+   This involves the '|' symbol that would appear in an input file, change the code so that it doesn't
+   separate primary and non primary columns
+ * Use std::string?
+ * Change method of reading input file, use ifstream/getline etc
+ * Look out for need for null character '\0', might be needed
+ * Check which variables are actually needed
+ * Remove verbose
+ * Program arguments
+ * Make sure when running this main.cpp file that it is not still linked to the main.c file or dlx.cpp
+ * Use try...catch and error functions to end program with message
+ */
 
 /* Generalized exact cover.
  * Donald Knuth
@@ -36,15 +53,13 @@ main.cpp
    and is identifiable by the fact that its 'name' is empty.
  */
 #define root colArray[0] // gateway to the unsettled columns
-
-
 #define bufSize 8 * maxCols + 3 // upper bound on the input line length
-//#define panic(m) { fprintf(stderr, "%s!\n%s", m, buf); exit(-1); }
+
 
 #include <iostream>
 #include <stdio.h> //printf, fprintf, sscanf, fgets, NULL, stdin, stderr <cstdio>
 #include <stdlib.h> //exit, NULL <cstdlib>
-#include <ctype.h> //isspace() function, <cctype>
+#include <cctype> //isspace() function, <ctype.h>
 #include <cstring> //strcmp, strlen <string.h>
 
 using namespace std;
@@ -103,6 +118,7 @@ struct Column {
 
 
 // Global Variables:
+/** MAKE THESE LOCAL, CHANGE FUNCTION ARGUMENTS **/
 char buf[bufSize];
 int level; // number of choices in current partial solution
 int updates; // number of times we deleted a list element
@@ -121,11 +137,11 @@ Column colArray[maxCols + 2]; //place for column records
 // Subroutines:
 /* Output a row to screen:
  * A row is identified not by name, but by the names of the columns it contains.
- * PrintRow outputs a row, given a pointer to any of its columns.
+ * printRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
  */
 
-void PrintRow(Node* p){
+void printRow(Node *p){
 
     int k;
     Node* q = p;
@@ -148,10 +164,10 @@ void PrintRow(Node* p){
 }
 
 
-void PrintState(int lev){
+void printState(int lev){
     int l;
     for(l = 0; l <= lev; ++l){
-        PrintRow(choice[l]);
+        printRow(choice[l]);
     }
 }
 
@@ -161,7 +177,7 @@ void PrintState(int lev){
  * Therefore, a node is never removed from a list twice.
  */
 
-void Cover(Column* c){
+void cover(Column *c){
 
     int k = 1; // updates
     Node* nn;
@@ -196,7 +212,7 @@ void Cover(Column* c){
  * The pointers thereby execute a 'dance' which returns them
    to their former state.
  */
-void Uncover(Column* c){
+void uncover(Column *c){
 
     Node* nn;
     Node* rr;
@@ -219,11 +235,8 @@ void Uncover(Column* c){
 }
 
 
-// Main function:
-
 int main (int argc, char** argv){
 
-    //Local Variables
     char* p;
     char* q;
     int j, k, x;
@@ -246,25 +259,12 @@ int main (int argc, char** argv){
         cout << "Input line too long" << endl;
         exit(1);
     }
-    for(p = buf, primary = 1; *p; ++p){
+    for(p = buf; *p; ++p){ //no need for primary.
         while(isspace(*p)){ // isspace() is a function to check if the passed character is whitespace
             ++p;
         }
         if(!*p){
             break;
-        }
-        if(*p == '|'){
-            primary = 0;
-            if(currentCol == colArray + 1){
-                /* This program ends if the input file has no primary columns.
-                 * We don't care, we want all columns, we will not have primary and non-primary columns in input file
-                 * Need to change this piece of code.
-                 */
-                cout << "No primary columns." << endl;
-                exit(1);
-            }
-            (currentCol - 1)->next = &root,root.prev = currentCol-1;
-            continue;
         }
         for(q = p+1; !isspace(*q); ++q);
         if(q > p+7){
@@ -280,34 +280,23 @@ int main (int argc, char** argv){
         }
         currentCol->head.up = currentCol->head.down = &currentCol->head;
         currentCol->len = 0;
-        if(primary){
-            currentCol->prev = currentCol-1, (currentCol - 1)->next = currentCol;
-        }
-        else{
-            currentCol->prev = currentCol->next = currentCol;
-        }
+        currentCol->prev = currentCol-1, (currentCol-1)->next = currentCol;
         ++currentCol;
     }
-    if(primary){
-        if(currentCol == colArray + 1){
-            cout << "No primary columns." << endl;
-            exit(1);
-        }
-        (currentCol-1)->next = &root, root.prev = currentCol - 1;
-    }
+    (currentCol-1)->next = &root, root.prev = currentCol - 1;
+
 
 
     // Inputting the matrix - read the rows:
     currentNode = nodeArray;
     while(fgets(buf, bufSize, stdin)){
-        Node* rowStart;
+        Node* rowStart = nullptr;
         Column* ccol;
 
         if(buf[strlen(buf)-1] != '\n'){
             cout << "Input line too long." << endl;
             exit(1);
         }
-        rowStart = NULL;
         for(p = buf; *p; ++p){
             while(isspace(*p)){
                 ++p;
@@ -324,7 +313,8 @@ int main (int argc, char** argv){
                 *q = *p;
             }
             *q = '\0'; //End of string, null character
-            for(ccol = colArray; strcmp(ccol->name, currentCol->name); ++ccol);
+            for(ccol = colArray; strcmp(ccol->name, currentCol->name); ++ccol); // while ccolname and currentColname are DIFFERENT ++ccol
+            // i.e. while strcmp( , ) == 1, which only happens when the names are different
             if(ccol == currentCol){
                 cout << "Unknown column name." << endl;
                 exit(1);
@@ -371,6 +361,7 @@ int main (int argc, char** argv){
        and 'blocking' its rows, which is done by removing nodes from other
        lists whenever they belong to a row of a node in this column's list.
      */
+
     level = 0;
     forward: ; // Set bestCol to the best column for branching:
         minLen = maxNodes;
@@ -405,7 +396,7 @@ int main (int argc, char** argv){
                 cout << "Branching on " << bestCol->name << "(" << minLen << ")" << endl;
             }
         }
-        Cover(bestCol);
+        cover(bestCol);
         currentNode = choice[level] = bestCol->head.down;
 
     advance: ;
@@ -414,12 +405,12 @@ int main (int argc, char** argv){
         }
         if(verbose > 1){
             cout << "Level " << level << ": ";
-            PrintRow(currentNode);
+            printRow(currentNode);
         }
 
-        // Cover all other columns of currentNode
+        // cover all other columns of currentNode
         for(pp = currentNode->right; pp != currentNode; pp = pp->right){
-            Cover(pp->col);
+            cover(pp->col);
         }
 
         if(root.next == &root){ //Record solution and goto recover
@@ -429,7 +420,7 @@ int main (int argc, char** argv){
                 if(count % spacing == 0){
                     cout << count << endl;
                     for(k = 0; k <= level; ++k){
-                        PrintRow(choice[k]);
+                        printRow(choice[k]);
                     }
                 }
             }
@@ -439,7 +430,7 @@ int main (int argc, char** argv){
         goto forward;
 
     backup:
-        Uncover(bestCol);
+        uncover(bestCol);
         if(level == 0){
             goto done;
         }
@@ -447,16 +438,17 @@ int main (int argc, char** argv){
         currentNode = choice[level];
         bestCol = currentNode->col;
 
-    // Uncover all other columns of currentNode
+    // uncover all other columns of currentNode
     /* We included left links, thereby making the rows doubly linked,
        so that columns would be uncovered in the correct LIFO order
        in this part of the program.
      * The 'uncover' routine itself could have done its job with
        right links only.
      */
+
     recover:
         for(pp = currentNode->left; pp != currentNode; pp = pp->left){
-            Uncover(pp->col);
+            uncover(pp->col);
         }
         currentNode = choice[level] = currentNode->down;
         goto advance;
@@ -469,7 +461,7 @@ int main (int argc, char** argv){
             }
             cout << endl;
         }
-        // End backtracking
+    // End backtracking
 
     cout << "Altogether " << count << " solutions, after " << updates << " updates." << endl;
     if(verbose){ // Print a profile of the search tree
