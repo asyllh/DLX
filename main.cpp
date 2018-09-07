@@ -12,7 +12,7 @@ main.cpp
  * Change code so that it doesn't include 'primary' and other columns, all columns should be needed
    This involves the '|' symbol that would appear in an input file, change the code so that it doesn't
    separate primary and non primary columns
- * Use std::string?
+ * Use std::string instead of char pointers
  * Change method of reading input file, use ifstream/getline etc
  * Look out for need for null character '\0', might be needed
  * Check which variables are actually needed
@@ -247,10 +247,10 @@ int main (int argc, char** argv){
     Column* currentCol;
     Column* bestCol; // column chosen for branching
 
-    verbose = argc - 1;
+    /*verbose = argc - 1;
     if (verbose){
         sscanf(argv[1], "%d", &spacing); //
-    }
+    }*/
 
     // Inputting the matrix - read the column names:
     currentCol = colArray + 1;
@@ -365,37 +365,26 @@ int main (int argc, char** argv){
     level = 0;
     forward: ; // Set bestCol to the best column for branching:
         minLen = maxNodes;
-        if(verbose > 2){
-            cout << "Level: " << level;
-        }
         for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
-            /*if(verbose > 2){
-                cout << " " << currentCol->name << "(" << currentCol->len << ")";
-            }*/
             if(currentCol->len < minLen){
                 bestCol = currentCol, minLen = currentCol->len;
             }
         }
-        if(verbose){
-            if(level > maxl){
-                if(level >= maxLevel) {
-                    cout << "Too many levels." << endl;
-                    exit(1);
-                }
-                maxl = level;
+        if(level > maxl){
+            if(level >= maxLevel){
+                cout << "Too many levels." << endl;
+                exit(1);
             }
-            if(minLen > maxb){
-                if(minLen >= maxDegree){
-                    cout << "Too many branches." << endl;
-                    exit(1);
-                }
-                maxb = minLen;
-            }
-            ++profile[level][minLen];
-            if(verbose > 2){
-                cout << "Branching on " << bestCol->name << "(" << minLen << ")" << endl;
-            }
+            maxl = level;
         }
+        if(minLen > maxb){
+            if(minLen >= maxDegree){
+                cout << "Too many branches." << endl;
+                exit(1);
+            }
+            maxb = minLen;
+        }
+        ++profile[level][minLen];
         cover(bestCol);
         currentNode = choice[level] = bestCol->head.down;
 
