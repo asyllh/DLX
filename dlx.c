@@ -107,7 +107,7 @@ node *choice[maxLevel]; //the row and column chosen on each level
 
 /* Output a row to screen:
  * A row is identified not by name, but by the names of the columns it contains.
- * PrintRow outputs a row, given a pointer to any of its columns.
+ * printRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
  */
 
@@ -134,7 +134,7 @@ void printRow(p)
 }
 
 
-void PrintState(int lev){
+void printState(int lev){
     register int l;
     for(l = 0; l <= lev; l++){
         printRow(choice[l]);
@@ -377,7 +377,7 @@ int main (argc, argv)
             printf("L%d:",level);
             printRow(currentNode);
         }
-        // Cover all other columns of currentNode
+        // cover all other columns of currentNode
         for(pp = currentNode->right; pp != currentNode; pp = pp->right){
             cover(pp->col);
         }
@@ -406,7 +406,7 @@ int main (argc, argv)
         currentNode = choice[level];
         bestCol = currentNode->col;
 
-    recover: // Uncover all other columns of currentNode
+    recover: // uncover all other columns of currentNode
         /* We included left links, thereby making the rows doubly linked,
            so that columns would be uncovered in the correct LIFO order
            in this part of the program.
