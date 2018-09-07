@@ -304,7 +304,7 @@ uncover(c)
   l->next=r->prev=c;
 }
 
-@ @<Cover all other columns of |cur_node|@>=
+@ @<cover all other columns of |cur_node|@>=
 for (pp=cur_node->right;pp!=cur_node;pp=pp->right) cover(pp->col);
 
 @ We included |left| links, thereby making the rows doubly linked, so
@@ -312,7 +312,7 @@ that columns would be uncovered in the correct LIFO order in this
 part of the program. (The |uncover| routine itself could have done its
 job with |right| links only.) (Think about it.)
 
-@<Uncover all other columns of |cur_node|@>=
+@<uncover all other columns of |cur_node|@>=
 for (pp=cur_node->left;pp!=cur_node;pp=pp->left) uncover(pp->col);
       
 @ @<Set |best_col| to  the best column for branching@>=
