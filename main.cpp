@@ -1,5 +1,6 @@
 /*--------------/
 ALH
+C++ program implementing DLX
 main.cpp
 01/09/18
 /--------------*/
@@ -20,81 +21,41 @@ main.cpp
  * Program arguments
  * Make sure when running this main.cpp file that it is not still linked to the main.c file or dlx.cpp
  * Use try...catch and error functions to end program with message
- */
-
-/* Generalized exact cover.
- * Donald Knuth
- * This program implements algorithm X from Dancing Links paper.
- * Given a 0-1 matrix, the problem is to find all subsets of its rows whose
-   sum is AT MOST 1 in all columns and EXACTLY 1 in all "primary" columns.
-
- * Matrix is specific in the standard input file as follows:
-    * Each column has a symbolic name, between 1 and 7 characters long
-    * The first line of input contains the names of all primary columns,
-      followed by '|', followed by the names of all thee other columns.
-    * If all columns are primary, the '|' may be omitted.
-    * The remaining lines represent the rows, by listing the columns
-      where 1 appears.
- * The program prints the number of solutions and the total number of link
-   updates.
- * It also prints every 'n'th solution, if the integer command line
-   argument 'n' is given.
- * A second command line argument causes the full search tree to be printed
- * A third command line argument makes the output even more verbose.
+ * How is the solution being stored? Just want to store which subset of rows contain exactly one 1 in every column
  */
 
 #define maxLevel 150 // at most this many rows in a solution
 #define maxDegree 10000 // at most this many branches per search tree node
 #define maxCols 10000 // at most this many columns
 #define maxNodes 1000000 // at most this many nonzero elements in the matrix
-
-/* One 'column' struct is called the 'root'.
- * It serves as the head of the list of columns that need to be covered,
-   and is identifiable by the fact that its 'name' is empty.
- */
-#define root colArray[0] // gateway to the unsettled columns
+#define root colArray[0] // first column struct, head of list of columns, has no 'name', gateway to the unsettled columns
 #define bufSize 8 * maxCols + 3 // upper bound on the input line length
 
-
 #include <iostream>
-#include <stdio.h> //printf, fprintf, sscanf, fgets, NULL, stdin, stderr <cstdio>
-#include <stdlib.h> //exit, NULL <cstdlib>
-#include <cctype> //isspace() function, <ctype.h>
-#include <cstring> //strcmp, strlen <string.h>
-
+#include <stdio.h> // printf, fprintf, sscanf, fgets, NULL, stdin, stderr <cstdio>
+#include <stdlib.h> // exit, NULL <cstdlib>
+#include <cctype> // isspace() function, <ctype.h>
+#include <cstring> // strcmp, strlen <string.h>
+#include <chrono> // For Timer struct
 using namespace std;
 
+struct Timer {
 
-/* Data structures:
- * Each column of the input matrix is represented by a 'column' struct.
- * Each row of the input matris is represented as a linked list of 'node' structs.
- * There is one node for each non-zero entry in the matrix.
- * The nodes are linked circularly within each row, in both directions.
- * The nodes are also linked circularly within each column.
- * The column lists each include a header node, but the rows lists do not.
- * Column header nodes are part of a 'column' struct, which contains further
-   information about the column.
- */
+    std::chrono::high_resolution_clock::time_point startTime, endTime;
+    std::chrono::duration<float> totalTime;
 
-/* Each node contains five fields.
-   * Four are the pointers of doubly linked lists
-   * The fifth points to the column containing the node
- */
+    Timer(){
+        startTime = std::chrono::high_resolution_clock::now();
+    }
 
-/* Each 'column' struct contains five fields.
-   * The 'head' is a node that stands at the head of its list of nodes.
-   * The 'len' tells the length of that list of nodes, not counting the header.
-   * The 'name' is a user specified identifier.
-   * 'next' and 'prev' point to adjacent columns, when this column is part
-     of a doubly linked list.
- * As backtracking proceeds, nodes will be deleted from column lists when
-   their row has been blocked by other rows in the partial solution.
- * When backtracking is complete, the data structures will be restored to
-   their original state.
- */
+    ~Timer(){
+        endTime = std::chrono::high_resolution_clock::now();
+        totalTime = endTime - startTime;
 
-//Each Node is linked to a Node on its left, a Node to its right, a Node above, and a Node below.
-//Each Node is also part of a Column.
+        float totalTimems = totalTime.count() * 1000.0f;
+        cout << "\nCPU Time: " << totalTimems << "ms (" << totalTime.count() << "s)" << endl;
+    }
+};
 
 struct Column; //forward declare Column struct so that it can be used in Node struct below
 
@@ -106,8 +67,6 @@ struct Node {
     Column* col; // The column containing this current node
 };
 
-//Each Column has a length, a name, a header which is a Node.
-//Each Column also has a Nolumn to its left (prev) and a Column to its right (next)
 struct Column {
     int len; // The number of non-header items currently in this column's list
     char name[8]; // Name of column, used for printing
@@ -126,7 +85,6 @@ int verbose; // >0 to show solutions, >1 to show partial ones too
 int count = 0; // number of solutions found so far
 int maxb = 0; // maximum branching factor actually needed
 int maxl = 0; // maximum level actually reached
-int spacing = 1; // if |verbose|, we output solutions when |count%spacing==0|
 int profile[maxLevel][maxDegree]; // tree nodes of given level and degree
 int updateProfile[maxLevel]; // updates at a given level
 Node nodeArray[maxNodes]; //place for nodes
@@ -134,13 +92,11 @@ Node* choice[maxLevel]; //the row and column chosen on each level
 Column colArray[maxCols + 2]; //place for column records
 
 
-// Subroutines:
-/* Output a row to screen:
- * A row is identified not by name, but by the names of the columns it contains.
+
+/* A row is identified not by name, but by the names of the columns it contains.
  * printRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
  */
-
 void printRow(Node *p){
 
     int k;
@@ -163,7 +119,6 @@ void printRow(Node *p){
     cout << " (" << k << " of " << p->col->len << ")" << endl;
 }
 
-
 void printState(int lev){
     int l;
     for(l = 0; l <= lev; ++l){
@@ -171,12 +126,7 @@ void printState(int lev){
     }
 }
 
-/* Covering a column:
- * When a row is blocked, it leaves all lists except the list of the column
-   that is being covered.
- * Therefore, a node is never removed from a list twice.
- */
-
+// Cover column, block row, leaves all columns except column that is being covered, so a node is never removed from a list twice.
 void cover(Column *c){
 
     int k = 1; // updates
@@ -206,12 +156,7 @@ void cover(Column *c){
     updateProfile[level] += k;
 }
 
-
-/* Uncovering a column:
- * Uncovering a column is done in precisely the reverse order.
- * The pointers thereby execute a 'dance' which returns them
-   to their former state.
- */
+// Uncovering a column, done in exact reverse order of covering.
 void uncover(Column *c){
 
     Node* nn;
@@ -247,12 +192,9 @@ int main (int argc, char** argv){
     Column* currentCol;
     Column* bestCol; // column chosen for branching
 
-    /*verbose = argc - 1;
-    if (verbose){
-        sscanf(argv[1], "%d", &spacing); //
-    }*/
+    Timer timer;
 
-    // Inputting the matrix - read the column names:
+    //Reading columns from file
     currentCol = colArray + 1;
     fgets(buf, bufSize, stdin);
     if(buf[strlen(buf)-1] != '\n'){
@@ -286,8 +228,7 @@ int main (int argc, char** argv){
     (currentCol-1)->next = &root, root.prev = currentCol - 1;
 
 
-
-    // Inputting the matrix - read the rows:
+    // Reading rows from file
     currentNode = nodeArray;
     while(fgets(buf, bufSize, stdin)){
         Node* rowStart = nullptr;
@@ -343,26 +284,9 @@ int main (int argc, char** argv){
     }
 
 
-    /* Backtracking through all solutions:
-     * Strategy for generating all exact covers will be to repeatedly always choose
-       the column that appears to be hardest to cover from all columns that still
-       need to be covered.
-     * This is the column with the shortest list. (i.e. smallest len)
-     * All possibilites are then explored via depth-first search.
-
-     * Depth-first search means last-in-first out maintenance of data structures.
-     * There is no need for auxiliary tables to undelete elements from lists
-       when backing up.
-     * The nodes removed from doubly linked lists remember their former neighbours,
-       because there is no garbage collection.
-
-     * The basic operation is 'covering a column'.
-     * This means removing it from the list of columns needing to be covered,
-       and 'blocking' its rows, which is done by removing nodes from other
-       lists whenever they belong to a row of a node in this column's list.
-     */
-
+    //Function: search(level)
     level = 0;
+    /** LINE 2: Choose a column object 'c' **/
     forward: ; // Set bestCol to the best column for branching:
         minLen = maxNodes;
         for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
@@ -385,60 +309,50 @@ int main (int argc, char** argv){
             maxb = minLen;
         }
         ++profile[level][minLen];
+        /** LINE 3: Cover column 'c' **/
         cover(bestCol);
-        currentNode = choice[level] = bestCol->head.down;
+        /** LINE 4: Setting r <- D[c] ready for the main for loop **/
+        currentNode = choice[level] = bestCol->head.down; //currentNode is first Node in bestCol column
 
     advance: ;
-        if(currentNode == &(bestCol->head)){
+        /** end main for loop when r = c, i.e. when currentNode is in bestCol **/
+        if(currentNode == &(bestCol->head)){ //If all nodes in bestCol column have been assessed
             goto backup;
         }
-        if(verbose > 1){
-            cout << "Level " << level << ": ";
-            printRow(currentNode);
-        }
-
-        // cover all other columns of currentNode
+        /** LINE 6: For each j <- R[r], R[R[r]], while j != r **/
         for(pp = currentNode->right; pp != currentNode; pp = pp->right){
+            /** LINE 7: Cover column 'j' **/
             cover(pp->col);
         }
-
-        if(root.next == &root){ //Record solution and goto recover
+        /** LINE 1: If R[h] = h, print the current solution and return **/
+        if(root.next == &root){ //If root column is the only column left (all other columns have been covered)
             ++count;
-            if(verbose){
-                ++profile[level+1][0];
-                if(count % spacing == 0){
-                    cout << count << endl;
-                    for(k = 0; k <= level; ++k){
-                        printRow(choice[k]);
-                    }
-                }
-            }
             goto recover;
         }
+        /** LINE 8: search(k+1) **/
         ++level;
         goto forward;
 
-    backup:
+    backup: ;
+        /** LINE 12: Uncover column 'c' and return **/
         uncover(bestCol);
+        /** END OF ALGORITHM: If top branch reached, no more columns to search, end **/
         if(level == 0){
             goto done;
         }
         --level;
+        /** LINE 9: r<- O_k and c <- C[r] **/
         currentNode = choice[level];
         bestCol = currentNode->col;
 
-    // uncover all other columns of currentNode
-    /* We included left links, thereby making the rows doubly linked,
-       so that columns would be uncovered in the correct LIFO order
-       in this part of the program.
-     * The 'uncover' routine itself could have done its job with
-       right links only.
-     */
-
+    // Uncover all other columns of currentNode in the correct LIFO order
     recover:
+        /** LINE 10: For each j <- L[r], L[L[r]], while j != r **/
         for(pp = currentNode->left; pp != currentNode; pp = pp->left){
+            /** LINE 11: Uncover column 'j' **/
             uncover(pp->col);
         }
+        /** LINE 4: Set r <- D[D[c]] (next node down in column) and go back into main for loop **/
         currentNode = choice[level] = currentNode->down;
         goto advance;
 
@@ -450,21 +364,43 @@ int main (int argc, char** argv){
             }
             cout << endl;
         }
-    // End backtracking
+    // End search(level)
 
+
+    // Output at end of algorithm
     cout << "Altogether " << count << " solutions, after " << updates << " updates." << endl;
-    if(verbose){ // Print a profile of the search tree
-        double tot, subtot;
-        tot = 1; // The root node does not show up in the profile
-        for(level = 1; level <= maxl + 1; ++level){
-            subtot = 0;
-            for(k = 0; k <= maxb; ++k){
-                cout << profile[level][k];
-                subtot += profile[level][k];
-            }
-            cout << subtot << " nodes, " << updateProfile[level-1] << endl;
-            tot += subtot;
+    double tot, subtot;
+    tot = 1; // The root node does not show up in the profile
+    for(level = 1; level <= maxl + 1; ++level){
+        subtot = 0;
+        for(k = 0; k <= maxb; ++k){
+            cout << profile[level][k];
+            subtot += profile[level][k];
         }
-        cout << "Total " << tot << "nodes." << endl;
+        cout << subtot << " nodes, " << updateProfile[level-1] << endl;
+        tot += subtot;
     }
+    cout << "Total " << tot << "nodes." << endl;
+
 } //END INT MAIN
+
+
+
+/* Backtracking through all solutions:
+ * Strategy for generating all exact covers will be to repeatedly always choose
+   the column that appears to be hardest to cover from all columns that still
+   need to be covered.
+ * This is the column with the shortest list. (i.e. smallest len)
+ * All possibilites are then explored via depth-first search.
+
+ * Depth-first search means last-in-first out maintenance of data structures.
+ * There is no need for auxiliary tables to undelete elements from lists
+   when backing up.
+ * The nodes removed from doubly linked lists remember their former neighbours,
+   because there is no garbage collection.
+
+ * The basic operation is 'covering a column'.
+ * This means removing it from the list of columns needing to be covered,
+   and 'blocking' its rows, which is done by removing nodes from other
+   lists whenever they belong to a row of a node in this column's list.
+ */
