@@ -356,14 +356,12 @@ int main (int argc, char** argv){
         currentNode = choice[level] = currentNode->down;
         goto advance;
 
-    done:
-        if(verbose > 3){ // Print column lengths to make sure everything has been restored
-            cout << "Final column lengths:" << endl;
-            for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
-                cout << currentCol->name << "(" << currentCol->len << ")" << endl;
-            }
-            cout << endl;
+    done: ;
+        cout << "Final column lengths:" << endl;
+        for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
+            cout << currentCol->name << "(" << currentCol->len << ")" << endl;
         }
+        cout << endl;
     // End search(level)
 
 
