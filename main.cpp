@@ -37,6 +37,8 @@ main.cpp
 #include <cctype> // isspace() function, <ctype.h>
 #include <cstring> // strcmp, strlen <string.h>
 #include <chrono> // For Timer struct
+
+//#include "func.h"
 using namespace std;
 
 struct Timer {
@@ -80,24 +82,22 @@ struct Column {
 /** MAKE THESE LOCAL, CHANGE FUNCTION ARGUMENTS **/
 char buf[bufSize];
 int level; // number of choices in current partial solution
-int updates; // number of times we deleted a list element
-int verbose; // >0 to show solutions, >1 to show partial ones too
+//int updates; // number of times we deleted a list element
+//int verbose; // >0 to show solutions, >1 to show partial ones too
 int count = 0; // number of solutions found so far
 int maxb = 0; // maximum branching factor actually needed
 int maxl = 0; // maximum level actually reached
 int profile[maxLevel][maxDegree]; // tree nodes of given level and degree
-int updateProfile[maxLevel]; // updates at a given level
+//int updateProfile[maxLevel]; // updates at a given level
 Node nodeArray[maxNodes]; //place for nodes
 Node* choice[maxLevel]; //the row and column chosen on each level
 Column colArray[maxCols + 2]; //place for column records
-
-
 
 /* A row is identified not by name, but by the names of the columns it contains.
  * printRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
  */
-void printRow(Node *p){
+void printRow(Node* p){
 
     int k;
     Node* q = p;
@@ -127,7 +127,7 @@ void printState(int lev){
 }
 
 // Cover column, block row, leaves all columns except column that is being covered, so a node is never removed from a list twice.
-void cover(Column *c){
+void cover(Column* c){
 
     int k = 1; // updates
     Node* nn;
@@ -152,12 +152,12 @@ void cover(Column *c){
             --nn->col->len;
         }
     }
-    updates += k;
-    updateProfile[level] += k;
+    //updates += k;
+   // updateProfile[level] += k;
 }
 
 // Uncovering a column, done in exact reverse order of covering.
-void uncover(Column *c){
+void uncover(Column* c){
 
     Node* nn;
     Node* rr;
@@ -179,21 +179,66 @@ void uncover(Column *c){
     l->next = r->prev = c;
 }
 
+//Function to choose column object c = 'bestCol', should return pointer to bestCol only.
+void selectBestColumn(Column*& bestCol){
+    int minLen = maxNodes;
+    Column* currentCol;
+
+    for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
+        if(currentCol->len < minLen){
+            bestCol = currentCol, minLen = currentCol->len;
+        }
+    }
+
+}
+
+void recursiveSearch(int& level, Node*& currentNode, Node*& choice[], Column*& bestCol){
+    /* Function: Choose column object 'bestCol'
+     * &bestCol, Column* currentCol (internal only), int minLen (internal only), maxNodes, root. */
+    selectBestColumn(bestCol); // Returns bestCol pointer (line 2)
+
+    cover(bestCol); // Cover bestCol column (line 3)
+
+    //Set r <- D[c] and O_k <- r, starting from first node below head node of column (line 4/5)
+    currentNode = choice[level] = bestCol->head.down;
+
+    // While r != c, continue going down column until head node is reached (line 4)
+    while(currentNode != &(bestCol->head)){
+        // For each j <- R[r] ... while j!=r, cover column j (line 6/7)
+        for(Node* rowNode = currentNode->right; rowNode != currentNode; rowNode = rowNode->right){
+            cover(rowNode->col);
+        }
+        // Do search(k+1) if root is not the only column left
+        if(root.next != &root){
+            ++level;
+            recursiveSearch(level, currentNode, choice[], bestCol);
+        }
+        // For each j <- L[r],... while j!=r, uncover column j (line 10/11)
+        for(Node* rowNode = currentNode->left; rowNode != currentNode; rowNode = rowNode->left){
+            uncover(rowNode->col);
+        }
+
+    }
+
+
+
+}
+
 
 int main (int argc, char** argv){
-
+    //region Variables
     char* p;
     char* q;
     int j, k, x;
     int minLen;
-    int primary;
-    Node* pp; // traverses a row
+    Node* rowNode; // traverses a row
     Node* currentNode;
     Column* currentCol;
     Column* bestCol; // column chosen for branching
-
+    //endregion
     Timer timer;
 
+    //region Inputting File
     //Reading columns from file
     currentCol = colArray + 1;
     fgets(buf, bufSize, stdin);
@@ -282,11 +327,11 @@ int main (int argc, char** argv){
         }
         rowStart->left = currentNode - 1, (currentNode - 1)->right = rowStart;
     }
+    //endregion
 
-
-    //Function: search(level)
+    //Start of search(k) recursive procedure
     level = 0;
-    /** LINE 2: Choose a column object 'c' **/
+    //region Function: search(level) here
     forward: ; // Set bestCol to the best column for branching:
         minLen = maxNodes;
         for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
@@ -309,50 +354,37 @@ int main (int argc, char** argv){
             maxb = minLen;
         }
         ++profile[level][minLen];
-        /** LINE 3: Cover column 'c' **/
         cover(bestCol);
-        /** LINE 4: Setting r <- D[c] ready for the main for loop **/
         currentNode = choice[level] = bestCol->head.down; //currentNode is first Node in bestCol column
-
+    //endregion
     advance: ;
-        /** end main for loop when r = c, i.e. when currentNode is in bestCol **/
         if(currentNode == &(bestCol->head)){ //If all nodes in bestCol column have been assessed
             goto backup;
         }
-        /** LINE 6: For each j <- R[r], R[R[r]], while j != r **/
-        for(pp = currentNode->right; pp != currentNode; pp = pp->right){
-            /** LINE 7: Cover column 'j' **/
-            cover(pp->col);
+        for(rowNode = currentNode->right; rowNode != currentNode; rowNode = rowNode->right){
+            cover(rowNode->col);
         }
-        /** LINE 1: If R[h] = h, print the current solution and return **/
         if(root.next == &root){ //If root column is the only column left (all other columns have been covered)
             ++count;
             goto recover;
         }
-        /** LINE 8: search(k+1) **/
         ++level;
         goto forward;
 
     backup: ;
-        /** LINE 12: Uncover column 'c' and return **/
         uncover(bestCol);
-        /** END OF ALGORITHM: If top branch reached, no more columns to search, end **/
         if(level == 0){
             goto done;
         }
         --level;
-        /** LINE 9: r<- O_k and c <- C[r] **/
         currentNode = choice[level];
         bestCol = currentNode->col;
 
     // Uncover all other columns of currentNode in the correct LIFO order
     recover:
-        /** LINE 10: For each j <- L[r], L[L[r]], while j != r **/
-        for(pp = currentNode->left; pp != currentNode; pp = pp->left){
-            /** LINE 11: Uncover column 'j' **/
-            uncover(pp->col);
+        for(rowNode = currentNode->left; rowNode != currentNode; rowNode = rowNode->left){
+            uncover(rowNode->col);
         }
-        /** LINE 4: Set r <- D[D[c]] (next node down in column) and go back into main for loop **/
         currentNode = choice[level] = currentNode->down;
         goto advance;
 
@@ -366,7 +398,7 @@ int main (int argc, char** argv){
 
 
     // Output at end of algorithm
-    cout << "Altogether " << count << " solutions, after " << updates << " updates." << endl;
+    //cout << "Altogether " << count << " solutions, after " << updates << " updates." << endl;
     double tot, subtot;
     tot = 1; // The root node does not show up in the profile
     for(level = 1; level <= maxl + 1; ++level){
@@ -375,7 +407,7 @@ int main (int argc, char** argv){
             cout << profile[level][k];
             subtot += profile[level][k];
         }
-        cout << subtot << " nodes, " << updateProfile[level-1] << endl;
+        //cout << subtot << " nodes, " << updateProfile[level-1] << endl;
         tot += subtot;
     }
     cout << "Total " << tot << "nodes." << endl;
