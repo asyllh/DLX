@@ -5,64 +5,52 @@ main.cpp
 01/09/18
 /--------------*/
 /** TO DO **/
-/* Make all global functions local, and add necessary arguments to functions
- * Make header file
- * Check if all macros are needed
+/* DONE: Make all global functions local, and add necessary arguments to functions
+ * DONE: Make header file
+ * DONE: Check if all macros are needed
  * nullptr
- * Remove need for labels
- * Change code so that it doesn't include 'primary' and other columns, all columns should be needed
+ * DONE: Remove need for labels
+ * DONE: Change code so that it doesn't include 'primary' and other columns, all columns should be needed
    This involves the '|' symbol that would appear in an input file, change the code so that it doesn't
    separate primary and non primary columns
  * Use std::string instead of char pointers
  * Change method of reading input file, use ifstream/getline etc
  * Look out for need for null character '\0', might be needed
  * Check which variables are actually needed
- * Remove verbose
+ * DONE: Remove verbose
  * Program arguments
  * Make sure when running this main.cpp file that it is not still linked to the main.c file or dlx.cpp
  * Use try...catch and error functions to end program with message
  * How is the solution being stored? Just want to store which subset of rows contain exactly one 1 in every column
  */
 
-//#define maxLevel 150 // at most this many rows in a solution
-//#define maxDegree 10000 // at most this many branches per search tree node
-//#define maxCols 10000 // at most this many columns
-//#define maxNodes 1000000 // at most this many nonzero elements in the matrix
-//#define root colArray[0] // first column struct, head of list of columns, has no 'name', gateway to the unsettled columns
-//#define bufSize 8 * maxCols + 3 // upper bound on the input line length
 
 #include <iostream>
 #include <stdio.h> // printf, fprintf, sscanf, fgets, NULL, stdin, stderr <cstdio>
 #include <stdlib.h> // exit, NULL <cstdlib>
 #include <cctype> // isspace() function, <ctype.h>
+#include <string>
 #include <cstring> // strcmp, strlen <string.h>
-#include <chrono> // For Timer struct
-//#include "constants.h"
 #include "func.h"
 using namespace std;
-
-
 
 int main (int argc, char** argv) {
 
     char* p = nullptr;
     char* q = nullptr;
-    int level;
-    //int j, k, x;
-    //int minLen;
-    //Node* rowNode; // traverses a row
-    Node* currentNode;
-    Column* bestCol; // column chosen for branching
-    Column* currentCol;
+    Node* currentNode = nullptr;
+    Column* bestCol = nullptr; // column chosen for branching
+    Column* currentCol = nullptr;
 
     Timer timer;
 
     //region Inputting File
     //Reading columns from file
     currentCol = colArray + 1;
-    fgets(buf, bufSize, stdin);
+    std::cout << "Enter Column names:" << std::endl;
+    fgets(buf, BUF_SIZE, stdin);
     if (buf[strlen(buf) - 1] != '\n') {
-        cout << "Input line too long" << endl;
+        std::cout << "Input line too long" << std::endl;
         exit(1);
     }
     for (p = buf; *p; ++p) { //no need for primary.
@@ -74,11 +62,11 @@ int main (int argc, char** argv) {
         }
         for (q = p + 1; !isspace(*q); ++q);
         if (q > p + 7) {
-            cout << "Column name too long." << endl;
+            std::cout << "Column name too long." << std::endl;
             exit(1);
         }
-        if (currentCol >= &colArray[maxCols]) {
-            cout << "Too many columns." << endl;
+        if (currentCol >= &colArray[MAX_COLS]) {
+            std::cout << "Too many columns." << std::endl;
             exit(1);
         }
         for (q = currentCol->name; !isspace(*p); ++q, ++p) {
@@ -86,20 +74,26 @@ int main (int argc, char** argv) {
         }
         currentCol->head.up = currentCol->head.down = &currentCol->head;
         currentCol->len = 0;
-        currentCol->prev = currentCol - 1, (currentCol - 1)->next = currentCol;
+        currentCol->prev = currentCol - 1;
+        (currentCol - 1)->next = currentCol;
         ++currentCol;
     }
-    (currentCol - 1)->next = &root, root.prev = currentCol - 1;
+    (currentCol - 1)->next = &colArray[0]; //&root
+    colArray[0].prev = currentCol - 1; //root.prev
 
 
     // Reading rows from file
     currentNode = nodeArray;
-    while (fgets(buf, bufSize, stdin)) {
+    std::cout << "Enter Row: ";
+    int x = 0;
+    while (x < 6) {
+        fgets(buf, BUF_SIZE, stdin);
         Node* rowStart = nullptr;
         Column* ccol = nullptr;
 
+
         if (buf[strlen(buf) - 1] != '\n') {
-            cout << "Input line too long." << endl;
+            std::cout << "Input line too long." << std::endl;
             exit(1);
         }
         for (p = buf; *p; ++p) {
@@ -111,7 +105,7 @@ int main (int argc, char** argv) {
             }
             for (q = p + 1; !isspace(*q); ++q);
             if (q > p + 7) {
-                cout << "Column name too long." << endl;
+                std::cout << "Column name too long." << std::endl;
                 exit(1);
             }
             for (q = currentCol->name; !isspace(*p); ++q, ++p) {
@@ -121,11 +115,11 @@ int main (int argc, char** argv) {
             for (ccol = colArray; strcmp(ccol->name, currentCol->name); ++ccol); // while ccolname and currentColname are DIFFERENT ++ccol
             // i.e. while strcmp( , ) == 1, which only happens when the names are different
             if (ccol == currentCol) {
-                cout << "Unknown column name." << endl;
+                std::cout << "Unknown column name." << std::endl;
                 exit(1);
             }
-            if (currentNode == &nodeArray[maxNodes]) {
-                cout << "Too many nodes." << endl;
+            if (currentNode == &nodeArray[MAX_NODES]) {
+                std::cout << "Too many nodes." << std::endl;
                 exit(1);
             }
             if (!rowStart) {
@@ -141,17 +135,27 @@ int main (int argc, char** argv) {
             ++currentNode;
         }
         if (!rowStart) {
-            cout << "Empty row." << endl;
+            std::cout << "Empty row." << std::endl;
             exit(1);
         }
         rowStart->left = currentNode - 1, (currentNode - 1)->right = rowStart;
+        ++x;
     }
     //endregion
 
+    p = nullptr;
+    q = nullptr;
+    currentNode = nullptr;
+    bestCol = nullptr;
+    currentCol = nullptr;
+
     //Start of search(k) recursive procedure
-    level = 0;
-    //Function: recursiveSearch(level) here
+    int level = 0;
     recursiveSearch(level, currentNode, bestCol);
+
+    for(int i = 0; i < 5; ++i){
+        printRow(choice[i]);
+    }
 
 
 
@@ -177,14 +181,14 @@ int main (int argc, char** argv) {
 
 
     /*forward: ; // Set bestCol to the best column for branching:
-        minLen = maxNodes;
+        minLen = MAX_NODES;
         for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
             if(currentCol->len < minLen){
                 bestCol = currentCol, minLen = currentCol->len;
             }
         }
         if(level > maxl){
-            if(level >= maxLevel){
+            if(level >= MAX_LEVEL){
                 cout << "Too many levels." << endl;
                 exit(1);
             }
