@@ -9,8 +9,8 @@ constants.h
 
 #include <iostream>
 #include <chrono>
-struct Timer {
 
+struct Timer {
     std::chrono::high_resolution_clock::time_point startTime, endTime;
     std::chrono::duration<float> totalTime;
 
@@ -21,7 +21,6 @@ struct Timer {
     ~Timer(){
         endTime = std::chrono::high_resolution_clock::now();
         totalTime = endTime - startTime;
-
         float totalTimems = totalTime.count() * 1000.0f;
         std::cout << "\nCPU Time: " << totalTimems << "ms (" << totalTime.count() << "s)" << std::endl;
     }
@@ -45,18 +44,27 @@ struct Column {
     Column* next; // The column after this current column
 };
 
-extern const int maxLevel;
-extern const int maxDegree;
-extern const int maxCols;
-extern const int maxNodes;
-extern const int bufSize;
-
+extern const int MAX_LEVEL;
+extern const int MAX_COLS;
+extern const int MAX_NODES;
+extern const int BUF_SIZE;
 
 extern char buf[];
-extern Node nodeArray[]; //place for nodes
-extern Node* choice[]; //the row and column chosen on each level
-extern Column colArray[]; //place for column records
-extern Column root;
+extern Node nodeArray[];
+extern Node* choice[];
+extern Column colArray[];
+//extern Column root;
+
+//extern const int MAX_DEGREE;
+//extern int level;
+//extern int updates;
+//extern int verbose;
+//extern int count;
+//extern int maxb;
+//extern int maxl;
+//extern int profile[][];
+//extern int updateProfile[];
+
 
 
 #endif
