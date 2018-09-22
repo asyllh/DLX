@@ -24,12 +24,12 @@ main.cpp
  * How is the solution being stored? Just want to store which subset of rows contain exactly one 1 in every column
  */
 
-#define maxLevel 150 // at most this many rows in a solution
-#define maxDegree 10000 // at most this many branches per search tree node
-#define maxCols 10000 // at most this many columns
-#define maxNodes 1000000 // at most this many nonzero elements in the matrix
-#define root colArray[0] // first column struct, head of list of columns, has no 'name', gateway to the unsettled columns
-#define bufSize 8 * maxCols + 3 // upper bound on the input line length
+//#define maxLevel 150 // at most this many rows in a solution
+//#define maxDegree 10000 // at most this many branches per search tree node
+//#define maxCols 10000 // at most this many columns
+//#define maxNodes 1000000 // at most this many nonzero elements in the matrix
+//#define root colArray[0] // first column struct, head of list of columns, has no 'name', gateway to the unsettled columns
+//#define bufSize 8 * maxCols + 3 // upper bound on the input line length
 
 #include <iostream>
 #include <stdio.h> // printf, fprintf, sscanf, fgets, NULL, stdin, stderr <cstdio>
@@ -37,283 +37,102 @@ main.cpp
 #include <cctype> // isspace() function, <ctype.h>
 #include <cstring> // strcmp, strlen <string.h>
 #include <chrono> // For Timer struct
-
-//#include "func.h"
+//#include "constants.h"
+#include "func.h"
 using namespace std;
 
-struct Timer {
-
-    std::chrono::high_resolution_clock::time_point startTime, endTime;
-    std::chrono::duration<float> totalTime;
-
-    Timer(){
-        startTime = std::chrono::high_resolution_clock::now();
-    }
-
-    ~Timer(){
-        endTime = std::chrono::high_resolution_clock::now();
-        totalTime = endTime - startTime;
-
-        float totalTimems = totalTime.count() * 1000.0f;
-        cout << "\nCPU Time: " << totalTimems << "ms (" << totalTime.count() << "s)" << endl;
-    }
-};
-
-struct Column; //forward declare Column struct so that it can be used in Node struct below
-
-struct Node {
-    Node* left; // Predecessor in row (node before this current node in row)
-    Node* right; // Successor in row (node after this current node in row)
-    Node* up; // Predecessor in column (node above this current node in column)
-    Node* down; // Successor in column (node below this current node in column)
-    Column* col; // The column containing this current node
-};
-
-struct Column {
-    int len; // The number of non-header items currently in this column's list
-    char name[8]; // Name of column, used for printing
-    Node head; // The list header
-    Column* prev; // The column before this current column
-    Column* next; // The column after this current column
-};
 
 
-// Global Variables:
-/** MAKE THESE LOCAL, CHANGE FUNCTION ARGUMENTS **/
-char buf[bufSize];
-int level; // number of choices in current partial solution
-//int updates; // number of times we deleted a list element
-//int verbose; // >0 to show solutions, >1 to show partial ones too
-int count = 0; // number of solutions found so far
-int maxb = 0; // maximum branching factor actually needed
-int maxl = 0; // maximum level actually reached
-int profile[maxLevel][maxDegree]; // tree nodes of given level and degree
-//int updateProfile[maxLevel]; // updates at a given level
-Node nodeArray[maxNodes]; //place for nodes
-Node* choice[maxLevel]; //the row and column chosen on each level
-Column colArray[maxCols + 2]; //place for column records
+int main (int argc, char** argv) {
 
-/* A row is identified not by name, but by the names of the columns it contains.
- * printRow outputs a row, given a pointer to any of its columns.
- * It also outputs the position of the row in its column.
- */
-void printRow(Node* p){
-
-    int k;
-    Node* q = p;
-
-    do {
-        cout << q->col->name;
-        q = q->right;
-    } while (q != p);
-
-    for(q = p->col->head.down, k=1; q != p; ++k){
-        if(q == &(p->col->head)){
-            cout << endl;
-            return; //row not in its column! //return what??
-        }
-        else {
-            q = q->down;
-        }
-    }
-    cout << " (" << k << " of " << p->col->len << ")" << endl;
-}
-
-void printState(int lev){
-    int l;
-    for(l = 0; l <= lev; ++l){
-        printRow(choice[l]);
-    }
-}
-
-// Cover column, block row, leaves all columns except column that is being covered, so a node is never removed from a list twice.
-void cover(Column* c){
-
-    int k = 1; // updates
-    Node* nn;
-    Node* rr;
-    Node* uu;
-    Node* dd;
-    Column* l;
-    Column* r;
-
-    l = c->prev;
-    r = c->next;
-    l->next = r;
-    r->prev = l;
-
-    for(rr = c->head.down; rr != &(c->head); rr = rr->down){
-        for(nn = rr->right; nn != rr; nn = nn->right){
-            uu = nn->up;
-            dd = nn->down;
-            uu->down = dd;
-            dd->up = uu;
-            ++k;
-            --nn->col->len;
-        }
-    }
-    //updates += k;
-   // updateProfile[level] += k;
-}
-
-// Uncovering a column, done in exact reverse order of covering.
-void uncover(Column* c){
-
-    Node* nn;
-    Node* rr;
-    Node* uu;
-    Node* dd;
-    Column* l;
-    Column* r;
-
-    for(rr = c->head.up; rr!= &(c->head); rr = rr->up){
-        for(nn = rr->left; nn != rr; nn = nn->left){
-            uu = nn->up;
-            dd = nn->down;
-            uu->down = dd->up = nn;
-            ++nn->col->len;
-        }
-    }
-    l = c->prev;
-    r = c->next;
-    l->next = r->prev = c;
-}
-
-//Function to choose column object c = 'bestCol', should return pointer to bestCol only.
-void selectBestColumn(Column*& bestCol){
-    int minLen = maxNodes;
-    Column* currentCol;
-
-    for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
-        if(currentCol->len < minLen){
-            bestCol = currentCol, minLen = currentCol->len;
-        }
-    }
-
-}
-
-void recursiveSearch(int& level, Node*& currentNode, Node*& choice[], Column*& bestCol){
-    /* Function: Choose column object 'bestCol'
-     * &bestCol, Column* currentCol (internal only), int minLen (internal only), maxNodes, root. */
-    selectBestColumn(bestCol); // Returns bestCol pointer (line 2)
-
-    cover(bestCol); // Cover bestCol column (line 3)
-
-    //Set r <- D[c] and O_k <- r, starting from first node below head node of column (line 4/5)
-    currentNode = choice[level] = bestCol->head.down;
-
-    // While r != c, continue going down column until head node is reached (line 4)
-    while(currentNode != &(bestCol->head)){
-        // For each j <- R[r] ... while j!=r, cover column j (line 6/7)
-        for(Node* rowNode = currentNode->right; rowNode != currentNode; rowNode = rowNode->right){
-            cover(rowNode->col);
-        }
-        // Do search(k+1) if root is not the only column left
-        if(root.next != &root){
-            ++level;
-            recursiveSearch(level, currentNode, choice[], bestCol);
-        }
-        // For each j <- L[r],... while j!=r, uncover column j (line 10/11)
-        for(Node* rowNode = currentNode->left; rowNode != currentNode; rowNode = rowNode->left){
-            uncover(rowNode->col);
-        }
-
-    }
-
-
-
-}
-
-
-int main (int argc, char** argv){
-    //region Variables
-    char* p;
-    char* q;
-    int j, k, x;
-    int minLen;
-    Node* rowNode; // traverses a row
+    char* p = nullptr;
+    char* q = nullptr;
+    int level;
+    //int j, k, x;
+    //int minLen;
+    //Node* rowNode; // traverses a row
     Node* currentNode;
-    Column* currentCol;
     Column* bestCol; // column chosen for branching
-    //endregion
+    Column* currentCol;
+
     Timer timer;
 
     //region Inputting File
     //Reading columns from file
     currentCol = colArray + 1;
     fgets(buf, bufSize, stdin);
-    if(buf[strlen(buf)-1] != '\n'){
+    if (buf[strlen(buf) - 1] != '\n') {
         cout << "Input line too long" << endl;
         exit(1);
     }
-    for(p = buf; *p; ++p){ //no need for primary.
-        while(isspace(*p)){ // isspace() is a function to check if the passed character is whitespace
+    for (p = buf; *p; ++p) { //no need for primary.
+        while (isspace(*p)) { // isspace() is a function to check if the passed character is whitespace
             ++p;
         }
-        if(!*p){
+        if (!*p) {
             break;
         }
-        for(q = p+1; !isspace(*q); ++q);
-        if(q > p+7){
+        for (q = p + 1; !isspace(*q); ++q);
+        if (q > p + 7) {
             cout << "Column name too long." << endl;
             exit(1);
         }
-        if(currentCol >= &colArray[maxCols]){
+        if (currentCol >= &colArray[maxCols]) {
             cout << "Too many columns." << endl;
             exit(1);
         }
-        for(q = currentCol->name; !isspace(*p); ++q, ++p){
+        for (q = currentCol->name; !isspace(*p); ++q, ++p) {
             *q = *p;
         }
         currentCol->head.up = currentCol->head.down = &currentCol->head;
         currentCol->len = 0;
-        currentCol->prev = currentCol-1, (currentCol-1)->next = currentCol;
+        currentCol->prev = currentCol - 1, (currentCol - 1)->next = currentCol;
         ++currentCol;
     }
-    (currentCol-1)->next = &root, root.prev = currentCol - 1;
+    (currentCol - 1)->next = &root, root.prev = currentCol - 1;
 
 
     // Reading rows from file
     currentNode = nodeArray;
-    while(fgets(buf, bufSize, stdin)){
+    while (fgets(buf, bufSize, stdin)) {
         Node* rowStart = nullptr;
-        Column* ccol;
+        Column* ccol = nullptr;
 
-        if(buf[strlen(buf)-1] != '\n'){
+        if (buf[strlen(buf) - 1] != '\n') {
             cout << "Input line too long." << endl;
             exit(1);
         }
-        for(p = buf; *p; ++p){
-            while(isspace(*p)){
+        for (p = buf; *p; ++p) {
+            while (isspace(*p)) {
                 ++p;
             }
-            if(!*p){
+            if (!*p) {
                 break;
             }
-            for(q = p+1; !isspace(*q); ++q);
-            if(q > p+7){
+            for (q = p + 1; !isspace(*q); ++q);
+            if (q > p + 7) {
                 cout << "Column name too long." << endl;
                 exit(1);
             }
-            for(q = currentCol->name; !isspace(*p); ++q, ++p){
+            for (q = currentCol->name; !isspace(*p); ++q, ++p) {
                 *q = *p;
             }
             *q = '\0'; //End of string, null character
-            for(ccol = colArray; strcmp(ccol->name, currentCol->name); ++ccol); // while ccolname and currentColname are DIFFERENT ++ccol
+            for (ccol = colArray; strcmp(ccol->name, currentCol->name); ++ccol); // while ccolname and currentColname are DIFFERENT ++ccol
             // i.e. while strcmp( , ) == 1, which only happens when the names are different
-            if(ccol == currentCol){
+            if (ccol == currentCol) {
                 cout << "Unknown column name." << endl;
                 exit(1);
             }
-            if(currentNode == &nodeArray[maxNodes]){
+            if (currentNode == &nodeArray[maxNodes]) {
                 cout << "Too many nodes." << endl;
                 exit(1);
             }
-            if(!rowStart){
+            if (!rowStart) {
                 rowStart = currentNode;
             }
-            else{
-                currentNode->left = currentNode -1, (currentNode -1)->right = currentNode;
+            else {
+                currentNode->left = currentNode - 1, (currentNode - 1)->right = currentNode;
             }
             currentNode->col = ccol;
             currentNode->up = ccol->head.up, ccol->head.up->down = currentNode;
@@ -321,7 +140,7 @@ int main (int argc, char** argv){
             ++ccol->len;
             ++currentNode;
         }
-        if(!rowStart){
+        if (!rowStart) {
             cout << "Empty row." << endl;
             exit(1);
         }
@@ -331,8 +150,33 @@ int main (int argc, char** argv){
 
     //Start of search(k) recursive procedure
     level = 0;
-    //region Function: search(level) here
-    forward: ; // Set bestCol to the best column for branching:
+    //Function: recursiveSearch(level) here
+    recursiveSearch(level, currentNode, bestCol);
+
+
+
+
+
+} //END INT MAIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*forward: ; // Set bestCol to the best column for branching:
         minLen = maxNodes;
         for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
             if(currentCol->len < minLen){
@@ -356,7 +200,7 @@ int main (int argc, char** argv){
         ++profile[level][minLen];
         cover(bestCol);
         currentNode = choice[level] = bestCol->head.down; //currentNode is first Node in bestCol column
-    //endregion
+
     advance: ;
         if(currentNode == &(bestCol->head)){ //If all nodes in bestCol column have been assessed
             goto backup;
@@ -393,13 +237,9 @@ int main (int argc, char** argv){
         for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
             cout << currentCol->name << "(" << currentCol->len << ")" << endl;
         }
-        cout << endl;
-    // End search(level)
+        cout << endl;*/
 
-
-    // Output at end of algorithm
-    //cout << "Altogether " << count << " solutions, after " << updates << " updates." << endl;
-    double tot, subtot;
+    /*double tot, subtot;
     tot = 1; // The root node does not show up in the profile
     for(level = 1; level <= maxl + 1; ++level){
         subtot = 0;
@@ -410,10 +250,7 @@ int main (int argc, char** argv){
         //cout << subtot << " nodes, " << updateProfile[level-1] << endl;
         tot += subtot;
     }
-    cout << "Total " << tot << "nodes." << endl;
-
-} //END INT MAIN
-
+    cout << "Total " << tot << "nodes." << endl;*/
 
 
 /* Backtracking through all solutions:
