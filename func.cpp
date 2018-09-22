@@ -6,7 +6,6 @@ func.cpp
 #include <iostream>
 #include "func.h"
 
-using namespace std;
 
 
 /* A row is identified not by name, but by the names of the columns it contains.
@@ -19,20 +18,20 @@ void printRow(Node* p){
     Node* q = p;
 
     do {
-        cout << q->col->name;
+        std::cout << q->col->name << " ";
         q = q->right;
     } while (q != p);
 
     for(q = p->col->head.down, i=1; q != p; ++i){
         if(q == &(p->col->head)){
-            cout << endl;
+            std::cout << std::endl;
             return; //row not in its column! //return what??
         }
         else {
             q = q->down;
         }
     }
-    cout << " (" << i << " of " << p->col->len << ")" << endl;
+    //std::cout << " (" << i << " of " << p->col->len << ")" << std::endl;
 }
 
 
@@ -40,12 +39,12 @@ void printRow(Node* p){
 void cover(Column* c){
 
     int i = 1; // updates
-    Node* nn;
-    Node* rr;
-    Node* uu;
-    Node* dd;
-    Column* l;
-    Column* r;
+    Node* nn = nullptr;
+    Node* rr = nullptr;
+    Node* uu = nullptr;
+    Node* dd = nullptr;
+    Column* l = nullptr;
+    Column* r = nullptr;
 
     l = c->prev;
     r = c->next;
@@ -69,12 +68,12 @@ void cover(Column* c){
 // Uncovering a column, done in exact reverse order of covering.
 void uncover(Column* c){
 
-    Node* nn;
-    Node* rr;
-    Node* uu;
-    Node* dd;
-    Column* l;
-    Column* r;
+    Node* nn = nullptr;
+    Node* rr = nullptr;
+    Node* uu = nullptr;
+    Node* dd = nullptr;
+    Column* l = nullptr;
+    Column* r = nullptr;
 
     for(rr = c->head.up; rr!= &(c->head); rr = rr->up){
         for(nn = rr->left; nn != rr; nn = nn->left){
@@ -92,12 +91,11 @@ void uncover(Column* c){
 //Function to choose column object c = 'bestCol', should return pointer to bestCol only.
 void selectBestColumn(Column*& bestCol){
 
-    int minLen = maxNodes;
-    Column* currentCol;
-
-    for(currentCol = root.next; currentCol != &root; currentCol = currentCol->next){
-        if(currentCol->len < minLen){
-            bestCol = currentCol, minLen = currentCol->len;
+    int minLen = 10;
+    //Column root1 = colArray[0];
+    for(Column* currCol = colArray[0].next; currCol != &colArray[0]; currCol = currCol->next){
+        if(currCol->len < minLen){
+            bestCol = currCol, minLen = currCol->len;
         }
     }
 
@@ -105,7 +103,7 @@ void selectBestColumn(Column*& bestCol){
 
 void recursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
     /* Function: Choose column object 'bestCol'
-     * &bestCol, Column* currentCol (internal only), int minLen (internal only), maxNodes, root. */
+     * &bestCol, Column* currentCol (internal only), int minLen (internal only), MAX_NODES, root. */
     selectBestColumn(bestCol); // Returns bestCol pointer (line 2)
 
     cover(bestCol); // Cover bestCol column (line 3)
@@ -120,7 +118,7 @@ void recursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
             cover(rowNode->col);
         }
         // Do search(k+1) if root is not the only column left
-        if(root.next != &root){
+        if(colArray[0].next != &colArray[0]){
             ++level;
             recursiveSearch(level, currentNode, bestCol);
         }

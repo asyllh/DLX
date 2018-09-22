@@ -9,8 +9,6 @@ func.h
 
 #include "constants.h"
 
-
-
 void printRow(Node* p);
 
 void cover(Column* c);
