@@ -25,12 +25,13 @@ void printRow(Node* p){
     for(q = p->col->head.down, i=1; q != p; ++i){
         if(q == &(p->col->head)){
             std::cout << std::endl;
-            return; //row not in its column! //return what??
+            return; //row not in its column!
         }
         else {
             q = q->down;
         }
     }
+    std::cout << std::endl;
     //std::cout << " (" << i << " of " << p->col->len << ")" << std::endl;
 }
 
@@ -102,6 +103,7 @@ void selectBestColumn(Column*& bestCol){
 }
 
 void recursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
+
     /* Function: Choose column object 'bestCol'
      * &bestCol, Column* currentCol (internal only), int minLen (internal only), MAX_NODES, root. */
     selectBestColumn(bestCol); // Returns bestCol pointer (line 2)
@@ -122,10 +124,17 @@ void recursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
             ++level;
             recursiveSearch(level, currentNode, bestCol);
         }
+        else if(colArray[0].next == &colArray[0]){
+            for(int i = 0; i <= level; ++i){
+                printRow(choice[i]);
+            }
+            std::cout << std::endl;
+        }
         // For each j <- L[r],... while j!=r, uncover column j (line 10/11)
         for(Node* rowNode = currentNode->left; rowNode != currentNode; rowNode = rowNode->left){
             uncover(rowNode->col);
         }
+
         currentNode = choice[level] = currentNode->down; // Set currentNode to the next node down in the column
     }
 
