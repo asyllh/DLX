@@ -13,10 +13,10 @@ main.cpp
  * DONE: Change code so that it doesn't include 'primary' and other columns, all columns should be needed
    This involves the '|' symbol that would appear in an input file, change the code so that it doesn't
    separate primary and non primary columns
- * Use std::string instead of char pointers
- * Change method of reading input file, use ifstream/getline etc
- * Look out for need for null character '\0', might be needed
- * Check which variables are actually needed
+ * DONE: Use std::string instead of char pointers
+ * DONE: Change method of reading input file, use ifstream/getline etc
+ * DONE: Look out for need for null character '\0', might be needed
+ * DONE: Check which variables are actually needed
  * DONE: Remove verbose
  * Program arguments
  * Make sure when running this main.cpp file that it is not still linked to the main.c file or dlx.cpp
@@ -26,32 +26,19 @@ main.cpp
  * How do we label the columns/rows in EVOL, i.e. how to label strips A, B, C or 0, 1, 2,..
    and does it need to be a string or a char?
  * How do we convert output from EVOl to use in DLX?
- *
  */
 
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <stdio.h> // printf, fprintf, sscanf, fgets, NULL, stdin, stderr <cstdio>
-#include <stdlib.h> // exit, NULL <cstdlib>
-#include <cctype> // isspace() function, <ctype.h>
-#include <string>
-#include <cstring> // strcmp, strlen <string.h>
 #include "func.h"
-//using namespace std;
 
 int main (int argc, char** argv) {
 
-    Node* currentNode = nullptr;
-    Column* currentCol = nullptr;
-
     Timer timer;
 
-    //region Inputting File
-    //Reading columns from file
-    currentCol = colArray + 1;
-
+    Column* currentCol = colArray + 1;
     std::ifstream ifs("dlxtest.txt");
     if(!ifs){
         std::cerr << "Cannot open file." << std::endl;
@@ -75,7 +62,7 @@ int main (int argc, char** argv) {
     colArray[0].prev = currentCol - 1; //root.prev*/
 
 
-    currentNode = nodeArray;
+    Node* currentNode = nodeArray;
     while (!ifs.eof()) {
         std::string rowInput;
         std::getline(ifs, rowInput);
@@ -117,11 +104,6 @@ int main (int argc, char** argv) {
     //Start of search(k) recursive procedure
     int level = 0;
     recursiveSearch(level, currentNode, bestCol);
-
-
-
-
-
 
 
 } //END INT MAIN
