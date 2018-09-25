@@ -8,6 +8,7 @@ constants.h
 #define DLX_CONSTANTS_H
 
 #include <iostream>
+#include <string>
 #include <chrono>
 
 struct Timer {
@@ -38,7 +39,8 @@ struct Node {
 
 struct Column {
     int len; // The number of non-header items currently in this column's list
-    char name[8]; // Name of column, used for printing
+    //char name[8]; // Name of column, used for printing
+    std::string name;
     Node head; // The list header
     Column* prev; // The column before this current column
     Column* next; // The column after this current column
@@ -47,9 +49,9 @@ struct Column {
 extern const int MAX_LEVEL;
 extern const int MAX_COLS;
 extern const int MAX_NODES;
-extern const int BUF_SIZE;
+//extern const int BUF_SIZE;
 
-extern char buf[];
+//extern char buf[];
 extern Node nodeArray[];
 extern Node* choice[];
 extern Column colArray[];
