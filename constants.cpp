@@ -16,6 +16,11 @@ const int MAX_NODES = 1000000; // at most this many nonzero elements in the matr
 Node nodeArray[MAX_NODES]; //place for nodes
 Node* choice[MAX_LEVEL]; //the row and column chosen on each level
 Column colArray[MAX_COLS + 2]; //place for column records
+
+
+void ProgramInfo(){
+    std::cout << "Please provide a file.\n";
+}
 //Column root = colArray[0]; // First column struct, head of list of columns, has no name.
 
 

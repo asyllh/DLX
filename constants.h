@@ -55,6 +55,9 @@ extern const int MAX_NODES;
 extern Node nodeArray[];
 extern Node* choice[];
 extern Column colArray[];
+
+
+void ProgramInfo();
 //extern Column root;
 
 //extern const int MAX_DEGREE;

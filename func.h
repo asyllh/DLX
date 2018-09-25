@@ -9,14 +9,14 @@ func.h
 
 #include "constants.h"
 
-void printRow(Node* p);
+void PrintRow(Node* p);
 
-void cover(Column* c);
+void Cover(Column* c);
 
-void uncover(Column* c);
+void Uncover(Column* c);
 
-void selectBestColumn(Column*& bestCol);
+void SelectBestColumn(Column*& bestCol);
 
-void recursiveSearch(int& level, Node*& currentNode, Column*& bestCol);
+void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol);
 
 #endif

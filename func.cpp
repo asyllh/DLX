@@ -12,7 +12,7 @@ func.cpp
  * printRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
  */
-void printRow(Node* p){
+void PrintRow(Node* p){
 
     int i;
     Node* q = p;
@@ -37,7 +37,7 @@ void printRow(Node* p){
 
 
 // Cover column, block row, leaves all columns except column that is being covered, so a node is never removed from a list twice.
-void cover(Column* c){
+void Cover(Column* c){
 
     int i = 1; // updates
     Node* nn = nullptr;
@@ -67,7 +67,7 @@ void cover(Column* c){
 }
 
 // Uncovering a column, done in exact reverse order of covering.
-void uncover(Column* c){
+void Uncover(Column* c){
 
     Node* nn = nullptr;
     Node* rr = nullptr;
@@ -90,7 +90,7 @@ void uncover(Column* c){
 }
 
 //Function to choose column object c = 'bestCol', should return pointer to bestCol only.
-void selectBestColumn(Column*& bestCol){
+void SelectBestColumn(Column*& bestCol){
 
     int minLen = 10;
     //Column root1 = colArray[0];
@@ -102,13 +102,13 @@ void selectBestColumn(Column*& bestCol){
 
 }
 
-void recursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
+void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
 
     /* Function: Choose column object 'bestCol'
      * &bestCol, Column* currentCol (internal only), int minLen (internal only), MAX_NODES, root. */
-    selectBestColumn(bestCol); // Returns bestCol pointer (line 2)
+    SelectBestColumn(bestCol); // Returns bestCol pointer (line 2)
 
-    cover(bestCol); // Cover bestCol column (line 3)
+    Cover(bestCol); // Cover bestCol column (line 3)
 
     //Set r <- D[c] and O_k <- r, starting from first node below head node of column (line 4/5)
     currentNode = choice[level] = bestCol->head.down;
@@ -117,29 +117,29 @@ void recursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
     while(currentNode != &(bestCol->head)){
         // For each j <- R[r] ... while j!=r, cover column j (line 6/7)
         for(Node* rowNode = currentNode->right; rowNode != currentNode; rowNode = rowNode->right){
-            cover(rowNode->col);
+            Cover(rowNode->col);
         }
         // Do search(k+1) if root is not the only column left
         if(colArray[0].next != &colArray[0]){
             ++level;
-            recursiveSearch(level, currentNode, bestCol);
+            RecursiveSearch(level, currentNode, bestCol);
         }
         else if(colArray[0].next == &colArray[0]){
             for(int i = 0; i <= level; ++i){
-                printRow(choice[i]);
+                PrintRow(choice[i]);
             }
             std::cout << std::endl;
         }
         // For each j <- L[r],... while j!=r, uncover column j (line 10/11)
         for(Node* rowNode = currentNode->left; rowNode != currentNode; rowNode = rowNode->left){
-            uncover(rowNode->col);
+            Uncover(rowNode->col);
         }
 
         currentNode = choice[level] = currentNode->down; // Set currentNode to the next node down in the column
     }
 
     //Exit while loop when all nodes in column have been assessed, currentNode == head node of bestCol
-    uncover(bestCol);
+    Uncover(bestCol);
     // Go up a level, exit this search function and go back into the previous search function
     if(level > 0){
         --level;
