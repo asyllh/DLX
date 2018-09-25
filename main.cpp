@@ -22,24 +22,28 @@ main.cpp
  * Make sure when running this main.cpp file that it is not still linked to the main.c file or dlx.cpp
  * Use try...catch and error functions to end program with message
  * How is the solution being stored? Just want to store which subset of rows contain exactly one 1 in every column
+ * Is the output using choice[level] a feasible solution? How do we check?
+ * How do we label the columns/rows in EVOL, i.e. how to label strips A, B, C or 0, 1, 2,..
+   and does it need to be a string or a char?
+ * How do we convert output from EVOl to use in DLX?
+ *
  */
 
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <stdio.h> // printf, fprintf, sscanf, fgets, NULL, stdin, stderr <cstdio>
 #include <stdlib.h> // exit, NULL <cstdlib>
 #include <cctype> // isspace() function, <ctype.h>
 #include <string>
 #include <cstring> // strcmp, strlen <string.h>
 #include "func.h"
-using namespace std;
+//using namespace std;
 
 int main (int argc, char** argv) {
 
-    char* p = nullptr;
-    char* q = nullptr;
     Node* currentNode = nullptr;
-    Column* bestCol = nullptr; // column chosen for branching
     Column* currentCol = nullptr;
 
     Timer timer;
@@ -47,31 +51,20 @@ int main (int argc, char** argv) {
     //region Inputting File
     //Reading columns from file
     currentCol = colArray + 1;
-    std::cout << "Enter Column names:" << std::endl;
-    fgets(buf, BUF_SIZE, stdin);
-    if (buf[strlen(buf) - 1] != '\n') {
-        std::cout << "Input line too long" << std::endl;
+
+    std::ifstream ifs("dlxtest.txt");
+    if(!ifs){
+        std::cerr << "Cannot open file." << std::endl;
         exit(1);
     }
-    for (p = buf; *p; ++p) { //no need for primary.
-        while (isspace(*p)) { // isspace() is a function to check if the passed character is whitespace
-            ++p;
-        }
-        if (!*p) {
-            break;
-        }
-        for (q = p + 1; !isspace(*q); ++q);
-        if (q > p + 7) {
-            std::cout << "Column name too long." << std::endl;
-            exit(1);
-        }
-        if (currentCol >= &colArray[MAX_COLS]) {
-            std::cout << "Too many columns." << std::endl;
-            exit(1);
-        }
-        for (q = currentCol->name; !isspace(*p); ++q, ++p) {
-            *q = *p;
-        }
+    std::string columnInput;
+    std::getline(ifs, columnInput);
+    std::stringstream ss(columnInput);
+    while(ss){
+        std::string tempString;
+        ss >> tempString;
+        if(!ss){ break; }
+        currentCol->name = tempString;
         currentCol->head.up = currentCol->head.down = &currentCol->head;
         currentCol->len = 0;
         currentCol->prev = currentCol - 1;
@@ -79,49 +72,23 @@ int main (int argc, char** argv) {
         ++currentCol;
     }
     (currentCol - 1)->next = &colArray[0]; //&root
-    colArray[0].prev = currentCol - 1; //root.prev
+    colArray[0].prev = currentCol - 1; //root.prev*/
 
 
-    // Reading rows from file
     currentNode = nodeArray;
-    std::cout << "Enter Rows:" << std::endl;
-    int x = 0;
-    while (x < 6) {
-        fgets(buf, BUF_SIZE, stdin);
+    while (!ifs.eof()) {
+        std::string rowInput;
+        std::getline(ifs, rowInput);
+        std::stringstream ss(rowInput);
+
         Node* rowStart = nullptr;
         Column* ccol = nullptr;
 
-
-        if (buf[strlen(buf) - 1] != '\n') {
-            std::cout << "Input line too long." << std::endl;
-            exit(1);
-        }
-        for (p = buf; *p; ++p) {
-            while (isspace(*p)) {
-                ++p;
-            }
-            if (!*p) {
-                break;
-            }
-            for (q = p + 1; !isspace(*q); ++q);
-            if (q > p + 7) {
-                std::cout << "Column name too long." << std::endl;
-                exit(1);
-            }
-            for (q = currentCol->name; !isspace(*p); ++q, ++p) {
-                *q = *p;
-            }
-            *q = '\0'; //End of string, null character
-            for (ccol = colArray; strcmp(ccol->name, currentCol->name); ++ccol); // while ccolname and currentColname are DIFFERENT ++ccol
-            // i.e. while strcmp( , ) == 1, which only happens when the names are different
-            if (ccol == currentCol) {
-                std::cout << "Unknown column name." << std::endl;
-                exit(1);
-            }
-            if (currentNode == &nodeArray[MAX_NODES]) {
-                std::cout << "Too many nodes." << std::endl;
-                exit(1);
-            }
+        while(!ss.eof()){
+            std::string tempString;
+            ss >> tempString;
+            if(!ss) { break; }
+            for(ccol = colArray; tempString.compare(ccol->name) != 0; ++ccol);
             if (!rowStart) {
                 rowStart = currentNode;
             }
@@ -139,15 +106,13 @@ int main (int argc, char** argv) {
             exit(1);
         }
         rowStart->left = currentNode - 1, (currentNode - 1)->right = rowStart;
-        ++x;
     }
-    //endregion
 
-    p = nullptr;
-    q = nullptr;
+    ifs.close();
+
     currentNode = nullptr;
-    bestCol = nullptr;
     currentCol = nullptr;
+    Column* bestCol = nullptr;
 
     //Start of search(k) recursive procedure
     int level = 0;
@@ -161,22 +126,3 @@ int main (int argc, char** argv) {
 
 } //END INT MAIN
 
-
-/* Backtracking through all solutions:
- * Strategy for generating all exact covers will be to repeatedly always choose
-   the column that appears to be hardest to cover from all columns that still
-   need to be covered.
- * This is the column with the shortest list. (i.e. smallest len)
- * All possibilites are then explored via depth-first search.
-
- * Depth-first search means last-in-first out maintenance of data structures.
- * There is no need for auxiliary tables to undelete elements from lists
-   when backing up.
- * The nodes removed from doubly linked lists remember their former neighbours,
-   because there is no garbage collection.
-
- * The basic operation is 'covering a column'.
- * This means removing it from the list of columns needing to be covered,
-   and 'blocking' its rows, which is done by removing nodes from other
-   lists whenever they belong to a row of a node in this column's list.
- */
