@@ -15,7 +15,6 @@ main.cpp
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <cstdlib>
 #include "func.h"
 
 int main (int argc, char** argv) {
