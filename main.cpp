@@ -9,6 +9,8 @@ main.cpp
  * How do we label the columns/rows in EVOL, i.e. how to label strips A, B, C or 0, 1, 2,..
    and does it need to be a string or a char?
  * How do we convert output from EVOl to use in DLX?
+ * Change input so that it reads in 0-1 matrix rather than file with column names and rows only
+   showing which column has a node in the row (so that it can use output matrix from EVOL)
  */
 
 
@@ -30,7 +32,7 @@ int main (int argc, char** argv) {
     std::ifstream ifs;
     ifs.open(argv[1]);
     if(!ifs){
-        std::cerr << "Cannot open file." << std::endl;
+        std::cerr << "[ERROR]: Cannot open file." << std::endl;
         exit(1);
     }
     std::string columnInput;
@@ -78,7 +80,7 @@ int main (int argc, char** argv) {
             ++currentNode;
         }
         if (!rowStart) {
-            std::cout << "Empty row." << std::endl;
+            std::cerr << "[ERROR]: Empty row." << std::endl;
             exit(1);
         }
         rowStart->left = currentNode - 1, (currentNode - 1)->right = rowStart;
