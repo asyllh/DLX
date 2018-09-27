@@ -11,6 +11,8 @@ func.h
 
 void PrintRow(Node* p);
 
+void StoreRowSolution(int level, Node* choice[]);
+
 void Cover(Column* c);
 
 void Uncover(Column* c);

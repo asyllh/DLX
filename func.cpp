@@ -22,6 +22,7 @@ void PrintRow(Node* p){
         q = q->right;
     } while (q != p);
 
+
     for(q = p->col->head.down, i=1; q != p; ++i){
         if(q == &(p->col->head)){
             std::cout << std::endl;
@@ -33,6 +34,26 @@ void PrintRow(Node* p){
     }
     std::cout << std::endl;
     //std::cout << " (" << i << " of " << p->col->len << ")" << std::endl;
+}
+
+void StoreRowSolution(int level, Node* choice[]){
+
+    int i;
+    std::vector<std::vector<std::string> > soln;
+    std::vector<std::string> temp;
+    for(i = 0; i <= level; ++i){
+        Node* p = choice[i];
+        Node* q = p;
+        do{
+            temp.push_back(q->col->name);
+            q = q->right;
+        } while (q != p);
+        soln.push_back(temp);
+        temp.clear();
+    }
+
+    rowSolutions.push_back(soln);
+
 }
 
 
@@ -126,10 +147,10 @@ void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
         }
         else if(colArray[0].next == &colArray[0]){
             ++solution;
-            for(int i = 0; i <= level; ++i){
+            /*for(int i = 0; i <= level; ++i){
                 PrintRow(choice[i]);
-            }
-            std::cout << std::endl;
+            }*/
+            StoreRowSolution(level, choice);
         }
         // For each j <- L[r],... while j!=r, uncover column j (line 10/11)
         for(Node* rowNode = currentNode->left; rowNode != currentNode; rowNode = rowNode->left){
