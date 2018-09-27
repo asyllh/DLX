@@ -12,6 +12,7 @@ const int MAX_COLS = 10000; // at most this many columns
 const int MAX_NODES = 1000000; // at most this many nonzero elements in the matrix
 
 int solution = 0;
+std::vector<std::vector<std::vector<std::string> > > rowSolutions;
 Node nodeArray[MAX_NODES]; //place for nodes
 Node* choice[MAX_LEVEL]; //the row and column chosen on each level
 Column colArray[MAX_COLS + 2]; //place for column records

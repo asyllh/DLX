@@ -8,6 +8,7 @@ constants.h
 #define DLX_CONSTANTS_H
 
 #include <iostream>
+#include <vector>
 #include <string>
 #include <chrono>
 
@@ -49,8 +50,9 @@ struct Column {
 extern const int MAX_LEVEL;
 extern const int MAX_COLS;
 extern const int MAX_NODES;
-extern int solution;
 
+extern int solution;
+extern std::vector<std::vector<std::vector<std::string> > > rowSolutions;
 extern Node nodeArray[];
 extern Node* choice[];
 extern Column colArray[];
