@@ -10,9 +10,8 @@ constants.cpp
 const int MAX_LEVEL = 150; // at most this many rows in a solution
 const int MAX_COLS = 10000; // at most this many columns
 const int MAX_NODES = 1000000; // at most this many nonzero elements in the matrix
-//const int BUF_SIZE = 80000; // upper bound on the input line length
 
-//char buf[BUF_SIZE];
+int solution = 0;
 Node nodeArray[MAX_NODES]; //place for nodes
 Node* choice[MAX_LEVEL]; //the row and column chosen on each level
 Column colArray[MAX_COLS + 2]; //place for column records

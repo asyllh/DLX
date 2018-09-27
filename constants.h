@@ -49,9 +49,8 @@ struct Column {
 extern const int MAX_LEVEL;
 extern const int MAX_COLS;
 extern const int MAX_NODES;
-//extern const int BUF_SIZE;
+extern int solution;
 
-//extern char buf[];
 extern Node nodeArray[];
 extern Node* choice[];
 extern Column colArray[];
