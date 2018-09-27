@@ -98,6 +98,18 @@ int main (int argc, char** argv) {
     //Start of search(k) recursive procedure
     int level = 0;
     RecursiveSearch(level, currentNode, bestCol);
+
+    for(int i = 0; i < rowSolutions.size(); ++i){
+        for(int j = 0; j < rowSolutions[i].size(); ++j){
+            for(int k = 0; k <rowSolutions[i][j].size(); ++k) {
+                std::cout << rowSolutions[i][j][k] << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
     if(solution == 0){
         std::cout << "No solution found." << std::endl;
     }
