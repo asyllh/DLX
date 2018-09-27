@@ -125,6 +125,7 @@ void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
             RecursiveSearch(level, currentNode, bestCol);
         }
         else if(colArray[0].next == &colArray[0]){
+            ++solution;
             for(int i = 0; i <= level; ++i){
                 PrintRow(choice[i]);
             }
