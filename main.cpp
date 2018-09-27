@@ -57,6 +57,9 @@ int main (int argc, char** argv) {
     while (!ifs.eof()) {
         std::string rowInput;
         std::getline(ifs, rowInput);
+        if(rowInput.empty()){
+            break;
+        }
         std::stringstream ss(rowInput);
 
         Node* rowStart = nullptr;
@@ -95,6 +98,12 @@ int main (int argc, char** argv) {
     //Start of search(k) recursive procedure
     int level = 0;
     RecursiveSearch(level, currentNode, bestCol);
+    if(solution == 0){
+        std::cout << "No solution found." << std::endl;
+    }
+    else{
+        std::cout << solution << " solutions found." << std::endl;
+    }
 
 
 } //END INT MAIN
