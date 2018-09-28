@@ -6,8 +6,6 @@ func.cpp
 #include <iostream>
 #include "func.h"
 
-
-
 /* A row is identified not by name, but by the names of the columns it contains.
  * printRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
@@ -125,7 +123,7 @@ void SelectBestColumn(Column*& bestCol){
 
 void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
     //static int i = 0;
-    std::cout << "In level: " << level << std::endl;
+    //std::cout << "In level: " << level << std::endl;
     //++i;
 
     /* Function: Choose column object 'bestCol'
@@ -146,6 +144,9 @@ void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
         // Do search(k+1) if root is not the only column left
         if(colArray[0].next != &colArray[0]){
             ++level;
+            if(level > highestLevel){
+                highestLevel = level;
+            }
             RecursiveSearch(level, currentNode, bestCol);
         }
         else if(colArray[0].next == &colArray[0]){
