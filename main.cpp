@@ -97,10 +97,9 @@ int main (int argc, char** argv) {
 
     //Start of search(k) recursive procedure
     int level = 0;
-    std::cout << "before recursiveSearch..." << std::endl;
     RecursiveSearch(level, currentNode, bestCol);
 
-    int smallestSetSize = INT_MAX;
+    int smallestSetSize = RAND_MAX;
     int smallestSetIndex;
     for(int i = 0; i < rowSolutions.size(); ++i){
         for(int j = 0; j < rowSolutions[i].size(); ++j){
@@ -113,19 +112,19 @@ int main (int argc, char** argv) {
 
     std::cout << "Number of strips in smallest solution: " << smallestSetSize << std::endl;
     std::cout << "Smallest Solution:\n";
-    for(int j = 0; j < rowSolutions[smallestSetIndex].size(); ++j){
-        for(int k = 0; k < rowSolutions[smallestSetIndex][j].size(); ++k){
-            std::cout << rowSolutions[smallestSetIndex][j][k] << " ";
+    for(const auto& subVec : rowSolutions[smallestSetIndex]){
+        for(const auto& v : subVec){
+            std::cout << v << " ";
         }
         std::cout << std::endl;
     }
     std::cout << std::endl;
 
-
-    /*for(int i = 0; i < rowSolutions.size(); ++i){
-        for(int j = 0; j < rowSolutions[i].size(); ++j){
-            for(int k = 0; k <rowSolutions[i][j].size(); ++k) {
-                std::cout << rowSolutions[i][j][k] << " ";
+    //std::cout << "All solutions:\n";
+    /*for(const auto& solnVec : rowSolutions){
+        for(const auto& subVec : solnVec){
+            for(const auto& v : subVec){
+                std::cout << v << " ";
             }
             std::cout << std::endl;
         }
@@ -134,10 +133,11 @@ int main (int argc, char** argv) {
     std::cout << std::endl;*/
 
     if(solution == 0){
-        std::cout << "No solution found." << std::endl;
+        std::cout << "No solutions found." << std::endl;
     }
     else{
         std::cout << solution << " solutions found." << std::endl;
+        std::cout << "Highest level: " << highestLevel << std::endl;
     }
 
 
