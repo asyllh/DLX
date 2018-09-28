@@ -52,6 +52,7 @@ extern const int MAX_COLS;
 extern const int MAX_NODES;
 
 extern int solution;
+extern int highestLevel;
 extern std::vector<std::vector<std::vector<std::string> > > rowSolutions;
 extern Node nodeArray[];
 extern Node* choice[];
