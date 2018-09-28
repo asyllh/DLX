@@ -97,9 +97,32 @@ int main (int argc, char** argv) {
 
     //Start of search(k) recursive procedure
     int level = 0;
+    std::cout << "before recursiveSearch..." << std::endl;
     RecursiveSearch(level, currentNode, bestCol);
 
+    int smallestSetSize = INT_MAX;
+    int smallestSetIndex;
     for(int i = 0; i < rowSolutions.size(); ++i){
+        for(int j = 0; j < rowSolutions[i].size(); ++j){
+            if(rowSolutions[i].size() < smallestSetSize){
+                smallestSetSize = rowSolutions[i].size();
+                smallestSetIndex = i;
+            }
+        }
+    }
+
+    std::cout << "Number of strips in smallest solution: " << smallestSetSize << std::endl;
+    std::cout << "Smallest Solution:\n";
+    for(int j = 0; j < rowSolutions[smallestSetIndex].size(); ++j){
+        for(int k = 0; k < rowSolutions[smallestSetIndex][j].size(); ++k){
+            std::cout << rowSolutions[smallestSetIndex][j][k] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+
+    /*for(int i = 0; i < rowSolutions.size(); ++i){
         for(int j = 0; j < rowSolutions[i].size(); ++j){
             for(int k = 0; k <rowSolutions[i][j].size(); ++k) {
                 std::cout << rowSolutions[i][j][k] << " ";
@@ -108,7 +131,7 @@ int main (int argc, char** argv) {
         }
         std::cout << std::endl;
     }
-    std::cout << std::endl;
+    std::cout << std::endl;*/
 
     if(solution == 0){
         std::cout << "No solution found." << std::endl;
