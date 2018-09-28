@@ -113,7 +113,7 @@ void Uncover(Column* c){
 //Function to choose column object c = 'bestCol', should return pointer to bestCol only.
 void SelectBestColumn(Column*& bestCol){
 
-    int minLen = 10;
+    int minLen = 100000;
     //Column root1 = colArray[0];
     for(Column* currCol = colArray[0].next; currCol != &colArray[0]; currCol = currCol->next){
         if(currCol->len < minLen){
@@ -124,6 +124,9 @@ void SelectBestColumn(Column*& bestCol){
 }
 
 void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
+    //static int i = 0;
+    std::cout << "In level: " << level << std::endl;
+    //++i;
 
     /* Function: Choose column object 'bestCol'
      * &bestCol, Column* currentCol (internal only), int minLen (internal only), MAX_NODES, root. */
