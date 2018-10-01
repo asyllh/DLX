@@ -17,7 +17,7 @@ std::vector<std::vector<std::vector<std::string> > > rowSolutions;
 Node nodeArray[MAX_NODES]; //place for nodes
 Node* choice[MAX_LEVEL]; //the row and column chosen on each level
 Column colArray[MAX_COLS + 2]; //place for column records
-
+Column* colRoot = nullptr;
 
 void ProgramInfo(){
     std::cout << "Please provide a file.\n";

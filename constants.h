@@ -57,6 +57,7 @@ extern std::vector<std::vector<std::vector<std::string> > > rowSolutions;
 extern Node nodeArray[];
 extern Node* choice[];
 extern Column colArray[];
+extern Column* colRoot;
 
 
 void ProgramInfo();

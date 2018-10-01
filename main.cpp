@@ -20,7 +20,6 @@ main.cpp
 #include "func.h"
 
 int main (int argc, char** argv) {
-
     if(argc < 2){
         ProgramInfo();
         exit(1);
@@ -28,7 +27,36 @@ int main (int argc, char** argv) {
 
     Timer timer;
 
-    Column* currentCol = colArray + 1;
+    Column* currentCol;
+    Column* prevCol = new Column;
+    colRoot = prevCol;
+    std::ifstream ifs;
+    ifs.open(argv[1]);
+    if(!ifs){
+        std::cerr << "[ERROR]: Cannot open file." << std::endl;
+        exit(1);
+    }
+    std::string columnInput;
+    std::getline(ifs, columnInput);
+    std::stringstream ss(columnInput);
+    while(ss){
+        std::string tempString;
+        ss >> tempString;
+        if(!ss){ break; }
+        currentCol = new Column;
+        currentCol->name = tempString;
+        currentCol->head.up = currentCol->head.down = &currentCol->head;
+        currentCol->len = 0;
+        currentCol->prev = prevCol;
+        prevCol->next = currentCol;
+        prevCol = currentCol;
+    }
+    prevCol->next = colRoot;
+    colRoot->prev = prevCol;
+    currentCol = nullptr;
+    prevCol = nullptr;
+
+    /*Column* currentCol = colArray + 1;
     std::ifstream ifs;
     ifs.open(argv[1]);
     if(!ifs){
@@ -49,11 +77,50 @@ int main (int argc, char** argv) {
         (currentCol - 1)->next = currentCol;
         ++currentCol;
     }
-    (currentCol - 1)->next = &colArray[0]; //&root
-    colArray[0].prev = currentCol - 1; //root.prev*/
+    (currentCol - 1)->next = &colArray[0];
+    colArray[0].prev = currentCol - 1;*/
 
+    Node* currentNode;
+    while (!ifs.eof()) {
+        std::string rowInput;
+        std::getline(ifs, rowInput);
+        if(rowInput.empty()){
+            break;
+        }
+        std::stringstream ss(rowInput);
+        Node* rowStart = nullptr;
+        Column* ccol = nullptr;
+        Node* prevNode = new Node;
+        while(!ss.eof()){
+            std::string tempString;
+            ss >> tempString;
+            if(!ss) { break; }
+            currentNode = new Node;
+            for(ccol = colRoot->next; tempString.compare(ccol->name) != 0 && ccol != colRoot; ccol = ccol->next); //this will loop forever, need it to stop at colRoot
+            if (!rowStart) {
+                rowStart = currentNode;
+            }
+            else {
+                currentNode->left = prevNode;
+                prevNode->right = currentNode;
+            }
+            currentNode->col = ccol;
+            currentNode->up = ccol->head.up, ccol->head.up->down = currentNode;
+            ccol->head.up = currentNode, currentNode->down = &ccol->head;
+            ++ccol->len;
+            prevNode = currentNode;
+        }
+        if (!rowStart) {
+            std::cerr << "[ERROR]: Empty row." << std::endl;
+            exit(1);
+        }
+        rowStart->left = prevNode;
+        prevNode->right = rowStart;
+    }
+    currentNode = nullptr;
+    ifs.close();
 
-    Node* currentNode = nodeArray;
+    /*Node* currentNode = nodeArray;
     while (!ifs.eof()) {
         std::string rowInput;
         std::getline(ifs, rowInput);
@@ -87,12 +154,9 @@ int main (int argc, char** argv) {
             exit(1);
         }
         rowStart->left = currentNode - 1, (currentNode - 1)->right = rowStart;
-    }
+    }*/
 
-    ifs.close();
 
-    currentNode = nullptr;
-    currentCol = nullptr;
     Column* bestCol = nullptr;
 
     //Start of search(k) recursive procedure

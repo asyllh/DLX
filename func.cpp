@@ -111,9 +111,10 @@ void Uncover(Column* c){
 //Function to choose column object c = 'bestCol', should return pointer to bestCol only.
 void SelectBestColumn(Column*& bestCol){
 
-    int minLen = 100000;
+    int minLen = RAND_MAX;
     //Column root1 = colArray[0];
-    for(Column* currCol = colArray[0].next; currCol != &colArray[0]; currCol = currCol->next){
+    //for(Column* currCol = colArray[0].next; currCol != &colArray[0]; currCol = currCol->next){
+    for(Column* currCol = colRoot->next; currCol != colRoot; currCol = currCol->next){
         if(currCol->len < minLen){
             bestCol = currCol, minLen = currCol->len;
         }
@@ -122,9 +123,7 @@ void SelectBestColumn(Column*& bestCol){
 }
 
 void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
-    //static int i = 0;
     //std::cout << "In level: " << level << std::endl;
-    //++i;
 
     /* Function: Choose column object 'bestCol'
      * &bestCol, Column* currentCol (internal only), int minLen (internal only), MAX_NODES, root. */
@@ -142,14 +141,16 @@ void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
             Cover(rowNode->col);
         }
         // Do search(k+1) if root is not the only column left
-        if(colArray[0].next != &colArray[0]){
+        //if(colArray[0].next != &colArray[0]){
+        if(colRoot->next != colRoot){
             ++level;
             if(level > highestLevel){
                 highestLevel = level;
             }
             RecursiveSearch(level, currentNode, bestCol);
         }
-        else if(colArray[0].next == &colArray[0]){
+        //else if(colArray[0].next == &colArray[0]){
+        else if(colRoot->next == colRoot){
             ++solution;
             /*for(int i = 0; i <= level; ++i){
                 PrintRow(choice[i]);
