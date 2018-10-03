@@ -96,7 +96,7 @@ int main (int argc, char** argv) {
             ss >> tempString;
             if(!ss) { break; }
             currentNode = new Node;
-            for(ccol = colRoot->next; tempString.compare(ccol->name) != 0 && ccol != colRoot; ccol = ccol->next); //this will loop forever, need it to stop at colRoot
+            for(ccol = colRoot->next; tempString != ccol->name && ccol != colRoot; ccol = ccol->next);
             if (!rowStart) {
                 rowStart = currentNode;
             }
