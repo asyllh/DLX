@@ -36,43 +36,36 @@ struct Node {
     Node* up; // Predecessor in column (node above this current node in column)
     Node* down; // Successor in column (node below this current node in column)
     Column* col; // The column containing this current node
+
+    Node()
+        : left(nullptr), right(nullptr), up(nullptr), down(nullptr), col(nullptr)
+    {
+
+    }
 };
 
 struct Column {
     int len; // The number of non-header items currently in this column's list
-    //char name[8]; // Name of column, used for printing
     std::string name;
     Node head; // The list header
     Column* prev; // The column before this current column
     Column* next; // The column after this current column
-};
 
-extern const int MAX_LEVEL;
-extern const int MAX_COLS;
-extern const int MAX_NODES;
+    Column()
+        : len(0), name(""), head(), prev(nullptr), next(nullptr)
+    {
+
+    }
+};
 
 extern int solution;
 extern int highestLevel;
-extern std::vector<std::vector<std::vector<std::string> > > rowSolutions;
-extern Node nodeArray[];
-extern Node* choice[];
-extern Column colArray[];
 extern Column* colRoot;
+extern std::vector<Node*> choice;
+extern std::vector<std::vector<std::vector<std::string> > > rowSolutions;
 
 
 void ProgramInfo();
-//extern Column root;
-
-//extern const int MAX_DEGREE;
-//extern int level;
-//extern int updates;
-//extern int verbose;
-//extern int count;
-//extern int maxb;
-//extern int maxl;
-//extern int profile[][];
-//extern int updateProfile[];
-
 
 
 #endif
