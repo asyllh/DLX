@@ -9,9 +9,7 @@ func.h
 
 #include "constants.h"
 
-void PrintRow(Node* p);
-
-void StoreRowSolution(int level, Node* choice[]);
+void StoreRowSolution(int level);
 
 void Cover(Column* c);
 

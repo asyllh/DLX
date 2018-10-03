@@ -10,46 +10,25 @@ func.cpp
  * printRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
  */
-void PrintRow(Node* p){
 
-    int i;
-    Node* q = p;
+void StoreRowSolution(int level){ //no need to pass choice as it's global
 
-    do {
-        std::cout << q->col->name << " ";
-        q = q->right;
-    } while (q != p);
-
-
-    for(q = p->col->head.down, i=1; q != p; ++i){
-        if(q == &(p->col->head)){
-            std::cout << std::endl;
-            return; //row not in its column!
-        }
-        else {
-            q = q->down;
-        }
-    }
-    std::cout << std::endl;
-    //std::cout << " (" << i << " of " << p->col->len << ")" << std::endl;
-}
-
-void StoreRowSolution(int level, Node* choice[]){
-
-    int i;
     std::vector<std::vector<std::string> > soln;
     std::vector<std::string> temp;
-    for(i = 0; i <= level; ++i){
-        Node* p = choice[i];
-        Node* q = p;
+    std::vector<Node*>::iterator it;
+
+    for(it = choice.begin(); it != choice.begin() + (level+1); ++it){
+        Node* first = *it;
+        Node* n = first;
         do{
-            temp.push_back(q->col->name);
-            q = q->right;
-        } while (q != p);
+            //std::cout << n->col->name << " ";
+            temp.push_back(n->col->name);
+            n = n->right;
+        } while (n != first);
+        //std::cout << std::endl;
         soln.push_back(temp);
         temp.clear();
     }
-
     rowSolutions.push_back(soln);
 
 }
@@ -132,7 +111,14 @@ void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
     Cover(bestCol); // Cover bestCol column (line 3)
 
     //Set r <- D[c] and O_k <- r, starting from first node below head node of column (line 4/5)
-    currentNode = choice[level] = bestCol->head.down;
+    //currentNode = choice[level] = bestCol->head.down;
+    if(choice.size() > level){
+        currentNode = choice[level] = bestCol->head.down;
+    }
+    else if(choice.size() <= level){
+        choice.push_back(bestCol->head.down);
+        currentNode = bestCol->head.down;
+    }
 
     // While r != c, continue going down column until head node is reached (line 4)
     while(currentNode != &(bestCol->head)){
@@ -152,10 +138,7 @@ void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
         //else if(colArray[0].next == &colArray[0]){
         else if(colRoot->next == colRoot){
             ++solution;
-            /*for(int i = 0; i <= level; ++i){
-                PrintRow(choice[i]);
-            }*/
-            StoreRowSolution(level, choice);
+            StoreRowSolution(level); //no need to pass choice as it's global
         }
         // For each j <- L[r],... while j!=r, uncover column j (line 10/11)
         for(Node* rowNode = currentNode->left; rowNode != currentNode; rowNode = rowNode->left){
