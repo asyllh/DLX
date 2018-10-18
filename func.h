@@ -8,6 +8,7 @@ func.h
 #define DLX_FUNC_H
 
 #include "constants.h"
+void Test(int level);
 
 void StoreRowSolution(int level);
 

@@ -10,6 +10,25 @@ func.cpp
  * printRow outputs a row, given a pointer to any of its columns.
  * It also outputs the position of the row in its column.
  */
+void Test(int level){
+    std::vector<std::vector<Node*> > solns;
+    std::vector<Node*> temp;
+    std::vector<Node*>::iterator it;
+
+    for(it = choice.begin(); it != choice.begin() + (level+1); ++it){
+        Node* first = *it;
+        Node* n = first;
+        do{
+            //std::cout << n->col->name << " ";
+            temp.push_back(n);
+            n = n->right;
+        } while (n != first);
+        //std::cout << std::endl;
+        solns.push_back(temp);
+        temp.clear();
+    }
+    rowSoln.push_back(solns);
+}
 
 void StoreRowSolution(int level){ //no need to pass choice as it's global
 
@@ -138,7 +157,8 @@ void RecursiveSearch(int& level, Node*& currentNode, Column*& bestCol){
         //else if(colArray[0].next == &colArray[0]){
         else if(colRoot->next == colRoot){
             ++solution;
-            StoreRowSolution(level); //no need to pass choice as it's global
+            //StoreRowSolution(level); //no need to pass choice as it's global
+            Test(level);
         }
         // For each j <- L[r],... while j!=r, uncover column j (line 10/11)
         for(Node* rowNode = currentNode->left; rowNode != currentNode; rowNode = rowNode->left){

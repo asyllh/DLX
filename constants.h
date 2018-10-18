@@ -63,7 +63,7 @@ extern int highestLevel;
 extern Column* colRoot;
 extern std::vector<Node*> choice;
 extern std::vector<std::vector<std::vector<std::string> > > rowSolutions;
-
+extern std::vector<std::vector<std::vector<Node*> > > rowSoln;
 
 void ProgramInfo();
 

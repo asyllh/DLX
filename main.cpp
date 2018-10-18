@@ -90,7 +90,9 @@ int main (int argc, char** argv) {
         std::stringstream ss(rowInput);
         Node* rowStart = nullptr;
         Column* ccol = nullptr;
-        Node* prevNode = new Node;
+        Node dummy;
+        Node* prevNode = &dummy;
+        //Node* prevNode = new Node;
         while(!ss.eof()){
             std::string tempString;
             ss >> tempString;
@@ -161,14 +163,23 @@ int main (int argc, char** argv) {
 
     //Start of search(k) recursive procedure
     int level = 0;
+    std::cout << "Starting RecursiveSearch.\n";
     RecursiveSearch(level, currentNode, bestCol);
 
     int smallestSetSize = RAND_MAX;
     int smallestSetIndex;
-    for(int i = 0; i < rowSolutions.size(); ++i){
+    /*for(int i = 0; i < rowSolutions.size(); ++i){
         for(int j = 0; j < rowSolutions[i].size(); ++j){
             if(rowSolutions[i].size() < smallestSetSize){
                 smallestSetSize = rowSolutions[i].size();
+                smallestSetIndex = i;
+            }
+        }
+    }*/
+    for(int i = 0; i < rowSoln.size(); ++i){
+        for(int j = 0; j < rowSoln[i].size(); ++j){
+            if(rowSoln[i].size() < smallestSetSize){
+                smallestSetSize = rowSoln[i].size();
                 smallestSetIndex = i;
             }
         }
@@ -176,9 +187,9 @@ int main (int argc, char** argv) {
 
     std::cout << "Number of strips in smallest solution: " << smallestSetSize << std::endl;
     std::cout << "Smallest Solution:\n";
-    for(const auto& subVec : rowSolutions[smallestSetIndex]){
+    for(const auto& subVec : rowSoln[smallestSetIndex]){
         for(const auto& v : subVec){
-            std::cout << v << " ";
+            std::cout << v->col->name << " ";
         }
         std::cout << std::endl;
     }
